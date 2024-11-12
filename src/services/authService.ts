@@ -5,3 +5,7 @@ export const register = (userData: { username: string; email: string; password: 
 
 export const login = (credentials: { username: string; password: string }) => 
   api.post('/auth/login', credentials);
+
+export const logout = () => {
+  localStorage.removeItem('token');
+};
