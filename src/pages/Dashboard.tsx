@@ -2,8 +2,8 @@
 import React from 'react';
 import Navbar from '../components/layout/Navbar';
 import Sidebar from '../components/layout/Sidebar';
-import Profile from '../components/dashboard/Profile';
-import ProgressBar from '../components/dashboard/ProgressBar';
+import Profile from '../components/Dashboard/Profile';
+import ProgressBar from '../components/Dashboard/ProgressBar';
 
 const Dashboard: React.FC = () => {
   const userProgress = 70; // Exemplo de progresso do usuário (70%)
