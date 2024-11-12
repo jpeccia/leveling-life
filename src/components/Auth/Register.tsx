@@ -1,4 +1,3 @@
-// src/components/auth/Register.tsx
 import React, { useState } from 'react';
 import { register } from '../../services/authService';
 
