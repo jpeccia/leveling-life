@@ -1,16 +1,27 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:4000', // Ajuste a URL conforme necessário
-  headers: { 'Content-Type': 'application/json' },
+  baseURL: '/auth',  // Apenas o caminho, já que o Vite vai redirecionar isso para o back-end
+  withCredentials: true,  // Se estiver usando cookies para autenticação
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
 });
 
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+
+// Adicionando o token no cabeçalho da requisição, se disponível
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`; // Adiciona o token no header
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
-  return config;
-});
+);
 
 export default api;

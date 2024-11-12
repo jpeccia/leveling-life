@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { register } from '../../services/authService';
 
 const Register: React.FC = () => {
-  const [formData, setFormData] = useState({ username: '', email: '', password: '', confirmPassword: '' });
+  const [formData, setFormData] = useState({ username: '', name:'', email: '', password: '', confirmPassword: '' });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
@@ -30,6 +30,7 @@ const Register: React.FC = () => {
       <h2 className="text-center">Criar Conta</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <input type="text" name="username" placeholder="Username" onChange={handleInputChange} required />
+        <input type="text" name="Name" placeholder="Name" onChange={handleInputChange} required />
         <input type="email" name="email" placeholder="Email" onChange={handleInputChange} required />
         <input type="password" name="password" placeholder="Senha" onChange={handleInputChange} required />
         <input type="password" name="confirmPassword" placeholder="Confirmar Senha" onChange={handleInputChange} required />
