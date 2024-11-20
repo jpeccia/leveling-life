@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { UserPlus, Users, Bell } from 'lucide-react';
-import { useAuthStore } from '../store/authStore';
 import api from '../lib/axios';
 
 interface Friend {
@@ -29,7 +28,7 @@ export function FriendsList() {
 
   const loadFriends = async () => {
     try {
-      const response = await api.get('/friends');
+      const response = await api.get('/friends/');
       setFriends(response.data);
     } catch (error) {
       console.error('Failed to load friends:', error);

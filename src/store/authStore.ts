@@ -6,9 +6,9 @@ interface User {
   username: string;
   email: string;
   level: number;
-  experience: number;
+  xp: number;
   title: string;
-  avatar?: string;
+  profilePicture: string;
 }
 
 interface AuthState {

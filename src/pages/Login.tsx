@@ -40,6 +40,9 @@ export default function Login() {
       // Atualizar o estado de autenticação
       setUser(user);
   
+      // Atualize o estado de autenticação, se necessário
+      useAuthStore.setState({ user: response.data.user });
+
       // Redirecionar para o dashboard
       navigate('/');
     } catch (err) {

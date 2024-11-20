@@ -20,7 +20,7 @@ export default function QuestCreation() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.post('/quests', formData);
+      await api.post('/quests/', formData);
       navigate('/');
     } catch (err) {
       setError('Failed to create quest');

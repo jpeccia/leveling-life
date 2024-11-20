@@ -4,7 +4,7 @@ import { ExperienceBar } from '../components/ExperienceBar';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { useAuthStore } from '../store/authStore';
-import { Edit2, Key, X } from 'lucide-react';
+import { Edit2, Key } from 'lucide-react';
 import api from '../lib/axios';
 
 type EditMode = 'profile' | 'password' | null;
@@ -67,7 +67,7 @@ export default function Profile() {
           <div className="flex flex-col items-center mb-8">
             <div className="relative">
               <img
-                src={user?.avatar || `https://ui-avatars.com/api/?name=${user?.name}`}
+                src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.name}`}
                 alt={user?.name}
                 className="w-32 h-32 rounded-full shadow-lg"
               />
@@ -89,10 +89,10 @@ export default function Profile() {
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-gray-600">Experience</span>
                 <span className="text-sm text-gray-500">
-                  {user?.experience}/100 XP
+                  {user?.xp}/100 XP
                 </span>
               </div>
-              <ExperienceBar current={user?.experience || 0} max={100} />
+              <ExperienceBar current={user?.xp || 0} max={100} />
             </div>
 
             {editMode === null ? (
