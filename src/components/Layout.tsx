@@ -39,23 +39,24 @@ export function Layout({ children }: LayoutProps) {
     <div className="flex h-screen bg-gray-100">
       <aside className="w-64 bg-white shadow-md flex flex-col">
         <div className="p-4 border-b">
+          <span>Leveling Life</span>
         </div>
 
-        <div className="p-4 border-b">
-          <div className="flex items-center space-x-3">
-            <img
-              src={user?.avatar || 'https://ui-avatars.com/api/?name=' + user?.name}
-              alt={user?.name}
-              className="w-10 h-10 rounded-full"
-            />
-            <div>
-              <p className="font-medium text-sm">{user?.name}</p>
-              <p className="text-xs text-gray-500">Level {user?.level}</p>
-            </div>
+        <div className="p-4 border-b flex flex-col items-center">
+          {/* User Profile */}
+          <img
+            src={user?.profilePicture || 'https://ui-avatars.com/api/?name=' + user?.name}
+            alt={user?.name}
+            className="w-16 h-16 rounded-full mb-2"
+          />
+          <p className="font-medium text-sm">{user?.name}</p>
+          <p className="text-xs text-gray-500 mb-2">{user?.title}</p> {/* Título abaixo do nome */}
+          
+          {/* Experience Bar */}
+          <div className="w-full mb-2">
+            <ExperienceBar current={user?.xp || 0} max={user ? user.level * 800 : 100} />
           </div>
-          <div className="mt-2">
-            <ExperienceBar current={user?.experience || 0} max={100} />
-          </div>
+          <p className="text-xs text-gray-500">Level {user?.level}</p>
         </div>
 
         <nav className="flex-1 p-4">
