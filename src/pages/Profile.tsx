@@ -25,14 +25,22 @@ export default function Profile() {
   });
   const [error, setError] = useState('');
 
-  // Efeito para carregar os dados do usuário ao montar o componente
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
-      setUser(JSON.parse(storedUser)); // Atualiza o estado com os dados armazenados
+      setUser(JSON.parse(storedUser));
     }
   }, [setUser]);
 
+  // Função para calcular o XP necessário para o próximo nível
+  const calculateXpForNextLevel = (level: number) => {
+    return level * 800; // Exemplo: cada nível requer 800 XP a mais
+  };
+
+  // Cálculo do XP necessário para o próximo nível
+  const nextLevelXp = calculateXpForNextLevel(user?.level || 1);
+
+  // Função de atualização do perfil
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -41,9 +49,8 @@ export default function Profile() {
         email: formData.email,
       });
 
-      // Verifique se os dados de resposta estão corretos
       if (response.data) {
-        setUser(response.data); // Atualiza o estado com os dados retornados pela API
+        setUser(response.data); 
       }
 
       setEditMode(null);
@@ -77,7 +84,6 @@ export default function Profile() {
       setError('Failed to update password');
     }
   };
-  
 
   return (
     <Layout>
@@ -108,10 +114,10 @@ export default function Profile() {
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-gray-600">Experience</span>
                 <span className="text-sm text-gray-500">
-                  {user?.xp}/100 XP
+                  {user?.xp}/{nextLevelXp} XP
                 </span>
               </div>
-              <ExperienceBar current={user?.xp || 0} max={100} />
+              <ExperienceBar current={user?.xp || 0} max={nextLevelXp} />
             </div>
 
             {editMode === null ? (
