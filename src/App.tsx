@@ -17,12 +17,35 @@ function App() {
   const { setUser } = useAuthStore();
 
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      // Simular a obtenção de dados do usuário (pode ser necessário fazer uma chamada à API)
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      setUser(user);  // Atualiza o estado com os dados do usuário
-    }
+    // Função que verifica se os dados do usuário ou token mudaram
+    const syncUserFromLocalStorage = () => {
+      const token = localStorage.getItem('authToken');
+      const user = localStorage.getItem('user');
+
+      if (token && user) {
+        const parsedUser = JSON.parse(user);
+        setUser(parsedUser);  // Atualiza o estado global com os dados do usuário
+      } else {
+        setUser(null);  // Caso não haja dados, garanta que o estado esteja limpo
+      }
+    };
+
+    // Sincroniza a cada renderização, garantindo que a sessão esteja correta
+    syncUserFromLocalStorage();
+
+    // Adiciona um listener para monitorar mudanças no localStorage
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'user' || event.key === 'authToken') {
+        syncUserFromLocalStorage();  // Atualiza os dados no estado global sempre que houver mudanças
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      // Limpa o listener quando o componente for desmontado
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, [setUser]);
 
   return (

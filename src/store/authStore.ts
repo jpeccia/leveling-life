@@ -12,6 +12,7 @@ interface User {
   profilePicture: string;
 }
 
+// O tipo de AuthState agora é mais claro, com o token sendo parte do tipo 'User'
 interface AuthState {
   isAuthenticated: boolean;
   user: User | null; // O usuário pode ser nulo antes do login
@@ -19,17 +20,53 @@ interface AuthState {
   logout: () => void;
 }
 
+// Função para buscar o usuário armazenado no localStorage de forma segura
+const getStoredUser = (): User | null => {
+  try {
+    const user = localStorage.getItem('user');
+    if (user && user !== 'undefined') {
+      const parsedUser = JSON.parse(user);
+      // Verifique se o usuário possui todos os campos necessários
+      if (parsedUser && parsedUser.id && parsedUser.name) {
+        return parsedUser;
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error("Erro ao carregar usuário do localStorage:", error);
+    return null;
+  }
+};
+
+// Criação do Zustand store
 export const useAuthStore = create<AuthState>((set) => ({
-  isAuthenticated: !!localStorage.getItem('authToken'), // Verifica se o token está presente
-  user: JSON.parse(localStorage.getItem('user') || 'null'), // Garante que a inicialização seja nula se não houver usuário
+  // Verifica se o token de autenticação está presente no localStorage
+  isAuthenticated: !!localStorage.getItem('authToken'),
+  user: getStoredUser(), // Recupera o usuário do localStorage, se houver
+
   setUser: (user) => {
-    localStorage.setItem('authToken', user.token); // Armazenando o token
-    localStorage.setItem('user', JSON.stringify(user)); // Armazenando os dados do usuário
-    set({ isAuthenticated: true, user: user }); // Define o estado com os dados do usuário
+    try {
+      // Armazena o token e os dados do usuário no localStorage
+      localStorage.setItem('authToken', user.token);
+      localStorage.setItem('user', JSON.stringify(user));
+      
+      // Atualiza o estado com os dados do usuário e o status de autenticação
+      set({ isAuthenticated: true, user: user });
+    } catch (error) {
+      console.error("Erro ao salvar usuário no localStorage:", error);
+    }
   },
+
   logout: () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
-    set({ isAuthenticated: false, user: null }); // Limpa o estado ao deslogar
+    try {
+      // Remove os dados do usuário e o token ao realizar o logout
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
+      
+      // Atualiza o estado para refletir que o usuário está deslogado
+      set({ isAuthenticated: false, user: null });
+    } catch (error) {
+      console.error("Erro ao remover dados do localStorage durante logout:", error);
+    }
   },
 }));

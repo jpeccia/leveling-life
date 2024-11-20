@@ -22,34 +22,30 @@ export default function Login() {
     try {
       const response = await api.post('/auth/login', formData);
       const { token } = response.data;
-      
+
       // Armazenar o token no localStorage
       localStorage.setItem('token', token);
-  
+
       // Fazer uma requisição para obter os dados do usuário
       const userResponse = await api.get('/user/', {
         headers: { Authorization: `Bearer ${token}` },
       });
-  
+
       const user = userResponse.data;
       console.log('User data:', user); // Verifique os dados do usuário
-  
-      // Armazenar o usuário e token
-      localStorage.setItem('user', JSON.stringify(user));
-  
-      // Atualizar o estado de autenticação
-      setUser(user);
-  
-      // Atualize o estado de autenticação, se necessário
-      useAuthStore.setState({ user: response.data.user });
 
-      // Redirecionar para o dashboard
+      // Armazenar o usuário no localStorage
+      localStorage.setItem('user', JSON.stringify(user));
+
+      // Atualizar o estado de autenticação
+      setUser(user); // Atualiza o estado global com os dados do usuário
+
+      // Redirecionar para o dashboard após login bem-sucedido
       navigate('/');
     } catch (err) {
       setError('Invalid username or password');
     }
   };
-  
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-100 to-white flex items-center justify-center p-4">
@@ -77,16 +73,16 @@ export default function Login() {
           />
 
           <div className="relative">
-          <Input
-            label="Password"
-            type={showPassword ? 'text' : 'password'}
-            required
-            value={formData.password}
-            onChange={(e) =>
-              setFormData({ ...formData, password: e.target.value })
-            }
-            autoComplete="current-password"
-          />
+            <Input
+              label="Password"
+              type={showPassword ? 'text' : 'password'}
+              required
+              value={formData.password}
+              onChange={(e) =>
+                setFormData({ ...formData, password: e.target.value })
+              }
+              autoComplete="current-password"
+            />
             <button
               type="button"
               className="absolute right-3 top-8 text-gray-400"

@@ -11,6 +11,7 @@ type QuestType = 'DAILY' | 'WEEKLY' | 'MONTHLY';
 export default function QuestCreation() {
   const navigate = useNavigate();
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -19,11 +20,18 @@ export default function QuestCreation() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.title || !formData.description) {
+      setError('Please fill in all fields');
+      return;
+    }
+    setLoading(true);
     try {
       await api.post('/quests/', formData);
       navigate('/');
     } catch (err) {
       setError('Failed to create quest');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -44,7 +52,7 @@ export default function QuestCreation() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="bg-red-50 text-red-500 p-4 rounded-lg flex items-center space-x-2">
+              <div className="bg-red-50 text-red-500 p-4 rounded-lg flex items-center space-x-2" aria-live="assertive">
                 <AlertCircle className="h-5 w-5" />
                 <span>{error}</span>
               </div>
@@ -64,9 +72,7 @@ export default function QuestCreation() {
               </label>
               <textarea
                 value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={4}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
                 placeholder="Describe your quest"
@@ -80,37 +86,45 @@ export default function QuestCreation() {
               </label>
               <div className="grid grid-cols-3 gap-4">
                 {questTypes.map((type) => (
-                  <button
-                    key={type.value}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, type: type.value })}
-                    className={`p-4 rounded-lg border-2 transition-colors ${
-                      formData.type === type.value
-                        ? 'border-indigo-600 bg-indigo-50 text-indigo-600'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="text-center">
-                      <div className="font-medium">{type.label}</div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        {type.value === 'DAILY'
-                          ? 'Resets every day'
-                          : type.value === 'WEEKLY'
-                          ? 'Resets weekly'
-                          : 'Resets monthly'}
+                  <label key={type.value} className="cursor-pointer">
+                    <input
+                      type="radio"
+                      value={type.value}
+                      checked={formData.type === type.value}
+                      onChange={() => setFormData({ ...formData, type: type.value })}
+                      className="hidden"
+                    />
+                    <div
+                      className={`p-4 rounded-lg border-2 transition-colors ${
+                        formData.type === type.value
+                          ? 'border-indigo-600 bg-indigo-50 text-indigo-600'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="text-center">
+                        <div className="font-medium">{type.label}</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {type.value === 'DAILY'
+                            ? 'Resets every day'
+                            : type.value === 'WEEKLY'
+                            ? 'Resets weekly'
+                            : 'Resets monthly'}
+                        </div>
                       </div>
                     </div>
-                  </button>
+                  </label>
                 ))}
               </div>
             </div>
 
             <div className="flex space-x-4">
-              <Button type="submit">Create Quest</Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? 'Creating...' : 'Create Quest'}
+              </Button>
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => navigate('/')}
+                onClick={() => navigate(-1)}
               >
                 Cancel
               </Button>
