@@ -1,15 +1,16 @@
 import { create } from 'zustand';
 
 // Defina o tipo do usuário de forma mais precisa
-interface User {
+type User = {
   id: string;
   name: string;
-  username: string;
   email: string;
+  username: string;
+  title: string,
   level: number;
-  xp: number;
-  title: string;
   profilePicture: string;
+  xp: number;
+  token: string;
 }
 
 // O tipo de AuthState agora é mais claro, com o token sendo parte do tipo 'User'
@@ -26,7 +27,6 @@ const getStoredUser = (): User | null => {
     const user = localStorage.getItem('user');
     if (user && user !== 'undefined') {
       const parsedUser = JSON.parse(user);
-      // Verifique se o usuário possui todos os campos necessários
       if (parsedUser && parsedUser.id && parsedUser.name) {
         return parsedUser;
       }
@@ -51,7 +51,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       localStorage.setItem('user', JSON.stringify(user));
       
       // Atualiza o estado com os dados do usuário e o status de autenticação
-      set({ isAuthenticated: true, user: user });
+      set({ isAuthenticated: true, user });
     } catch (error) {
       console.error("Erro ao salvar usuário no localStorage:", error);
     }

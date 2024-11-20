@@ -9,24 +9,35 @@ import { useEffect } from 'react';
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  console.log('isAuthenticated:', isAuthenticated);  // Verifique se está 'true' após login
+
+  // Se a autenticação ainda está sendo verificada, exibe um loading
+  if (isAuthenticated === undefined) {
+    return <div>Loading...</div>;
+  }
+
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
 function App() {
-  const { setUser } = useAuthStore();
+
+  const { setUser, isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     // Função que verifica se os dados do usuário ou token mudaram
     const syncUserFromLocalStorage = () => {
-      const token = localStorage.getItem('authToken');
-      const user = localStorage.getItem('user');
+      try {
+        const token = localStorage.getItem('authToken');
+        const user = localStorage.getItem('user');
 
-      if (token && user) {
-        const parsedUser = JSON.parse(user);
-        setUser(parsedUser);  // Atualiza o estado global com os dados do usuário
-      } else {
-        setUser(null);  // Caso não haja dados, garanta que o estado esteja limpo
+        if (token && user) {
+          const parsedUser = JSON.parse(user);
+          setUser({ ...parsedUser, token }); // Passa o token junto
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('Erro ao sincronizar dados do localStorage:', error);
+        setUser(null); // Limpa os dados em caso de falha
       }
     };
 
@@ -35,7 +46,7 @@ function App() {
 
     // Adiciona um listener para monitorar mudanças no localStorage
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'user' || event.key === 'authToken') {
+      if ((event.key === 'user' || event.key === 'authToken') && event.oldValue !== event.newValue) {
         syncUserFromLocalStorage();  // Atualiza os dados no estado global sempre que houver mudanças
       }
     };
@@ -49,36 +60,36 @@ function App() {
   }, [setUser]);
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route
-          path="/"
-          element={
-            <PrivateRoute>
-              <Dashboard />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <PrivateRoute>
-              <Profile />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/quests/create"
-          element={
-            <PrivateRoute>
-              <QuestCreation />
-            </PrivateRoute>
-          }
-        />
-      </Routes>
-    </BrowserRouter>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route
+            path="/"
+            element={
+              <PrivateRoute>
+                <Dashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <PrivateRoute>
+                <Profile />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/quests/create"
+            element={
+              <PrivateRoute>
+                <QuestCreation />
+              </PrivateRoute>
+            }
+          />
+        </Routes>
+      </BrowserRouter>
   );
 }
 

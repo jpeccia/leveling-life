@@ -6,6 +6,7 @@ import { Input } from '../components/Input';
 import { useAuthStore } from '../store/authStore';
 import { Edit2, Key, Camera } from 'lucide-react';
 import api from '../lib/axios';
+import { toast } from 'sonner';
 
 type EditMode = 'profile' | 'password' | null;
 
@@ -29,6 +30,8 @@ export default function Profile() {
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
     email: user?.email || '',
+    newEmail: '',
+    currentPassword: '',
     profilePicture: user?.profilePicture || '',
   });
   const [passwordData, setPasswordData] = useState({
@@ -101,30 +104,46 @@ export default function Profile() {
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const token = localStorage.getItem('authToken');
+  
+    if (!token) {
+      setError('Token de autenticação não encontrado.');
+      return;
+    }
+  
     try {
       const response = await api.post('/user/update', {
         name: profileData.name,
-        email: profileData.email,
+        newEmail: profileData.newEmail,
+        currentPassword: profileData.currentPassword
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       });
   
       if (response.data) {
-        // Atualiza os dados locais do perfil
+        // Atualiza o perfil
         setProfileData({
           name: response.data.name,
           email: response.data.email,
+          newEmail: response.data.newEmail,
+          currentPassword: response.data.currentPassword,
           profilePicture: response.data.profilePicture,
         });
   
-        // Atualiza o estado global com os dados do perfil
+        // Atualiza o estado global
         setUser(response.data);
-  
-        // Salva no localStorage para persistência
         localStorage.setItem('user', JSON.stringify(response.data));
   
-        setEditMode(null); // Fecha o modo de edição
-        setError(''); // Limpa os erros
+        setEditMode(null);
+        setError('');
       }
     } catch (err) {
+      console.error('Error:', err);
+      console.log("Senha atual:", profileData.currentPassword);
+
       setError('Failed to update profile');
     }
   };
@@ -137,7 +156,7 @@ export default function Profile() {
       return;
     }
     try {
-      await api.post('/user/update-password', {
+      await api.post('/user/update', {
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword,
       });
@@ -149,6 +168,7 @@ export default function Profile() {
         newPassword: '',
         confirmPassword: '',
       });
+      toast.success("Password changed successfully!")
     } catch (err) {
       setError('Failed to update password');
     }
@@ -246,6 +266,26 @@ export default function Profile() {
                   value={profileData.email}
                   onChange={(e) =>
                     setProfileData({ ...profileData, email: e.target.value })
+                  }
+                  required
+                />
+
+                <Input
+                  label="New Email"
+                  type="newEmail"
+                  value={profileData.newEmail}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, newEmail: e.target.value })
+                  }
+                  required
+                />
+
+                <Input
+                  label="Current Password"
+                  type="password"
+                  value={profileData.currentPassword}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, currentPassword: e.target.value })
                   }
                   required
                 />

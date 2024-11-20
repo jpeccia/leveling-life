@@ -6,6 +6,7 @@ import { Button } from '../components/Button';
 import Logo from '../components/Logo';
 import api from '../lib/axios';
 import { useAuthStore } from '../store/authStore';
+import { toast } from 'sonner'; // Importação corrigida
 
 export default function Login() {
   const navigate = useNavigate();
@@ -15,7 +16,6 @@ export default function Login() {
     username: '',
     password: '',
   });
-  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,27 +23,37 @@ export default function Login() {
       const response = await api.post('/auth/login', formData);
       const { token } = response.data;
 
-      // Armazenar o token no localStorage
       localStorage.setItem('token', token);
 
-      // Fazer uma requisição para obter os dados do usuário
       const userResponse = await api.get('/user/', {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       const user = userResponse.data;
-      console.log('User data:', user); // Verifique os dados do usuário
-
-      // Armazenar o usuário no localStorage
       localStorage.setItem('user', JSON.stringify(user));
+      setUser(user);
 
-      // Atualizar o estado de autenticação
-      setUser(user); // Atualiza o estado global com os dados do usuário
-
-      // Redirecionar para o dashboard após login bem-sucedido
+      toast.success('Login successful!');
       navigate('/');
-    } catch (err) {
-      setError('Invalid username or password');
+    } catch (err: any) {
+      if (err.response) {
+        switch (err.response.status) {
+          case 401:
+            toast.error('Incorrect password');
+            break;
+          case 403:
+            toast.error('Access forbidden');
+            break;
+          case 404:
+            toast.error('User not found');
+            break;
+          default:
+            toast.error('An unexpected error occurred');
+            break;
+        }
+      } else {
+        toast.error('Network error, please try again later');
+      }
     }
   };
 
@@ -55,12 +65,6 @@ export default function Login() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
-
           <Input
             label="Username"
             type="text"

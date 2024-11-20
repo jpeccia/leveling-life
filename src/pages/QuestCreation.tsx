@@ -5,6 +5,7 @@ import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { Clock, AlertCircle } from 'lucide-react';
 import api from '../lib/axios';
+import { toast } from 'sonner';
 
 type QuestType = 'DAILY' | 'WEEKLY' | 'MONTHLY';
 
@@ -22,14 +23,17 @@ export default function QuestCreation() {
     e.preventDefault();
     if (!formData.title || !formData.description) {
       setError('Please fill in all fields');
+      toast.error('Please fill in all fields'); // Notificação de erro
       return;
     }
     setLoading(true);
     try {
       await api.post('/quests/', formData);
+      toast.success('Quest created successfully!'); // Notificação de sucesso
       navigate('/');
     } catch (err) {
       setError('Failed to create quest');
+      toast.error('Failed to create quest'); // Notificação de erro
     } finally {
       setLoading(false);
     }

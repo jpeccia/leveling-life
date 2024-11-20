@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import Logo from '../components/Logo';
 import api from '../lib/axios';
+import { toast } from 'sonner'; // Importando diretamente o `toast` para notificações
 
 export default function Register() {
   const navigate = useNavigate();
@@ -17,17 +18,33 @@ export default function Register() {
     acceptTerms: false,
   });
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const validateForm = () => {
+    if (!formData.name.trim()) return 'Name is required';
+    if (!formData.username.trim()) return 'Username is required';
+    if (!formData.email.trim() || !formData.email.includes('@'))
+      return 'Valid email is required';
+    if (formData.password.length < 6)
+      return 'Password must be at least 6 characters';
+    if (formData.password !== formData.confirmPassword)
+      return 'Passwords do not match';
+    if (!formData.acceptTerms)
+      return 'You must accept the terms and conditions';
+    return null;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+
+    const errorMessage = validateForm();
+    if (errorMessage) {
+      setError(errorMessage);
+      toast.error(errorMessage);
       return;
     }
-    if (!formData.acceptTerms) {
-      setError('Please accept the terms and conditions');
-      return;
-    }
+
+    setIsSubmitting(true);
 
     try {
       await api.post('/auth/register', {
@@ -36,9 +53,34 @@ export default function Register() {
         email: formData.email,
         password: formData.password,
       });
+      toast.success('Account created successfully!');
       navigate('/login');
-    } catch (err) {
-      setError('Registration failed. Please try again.');
+    } catch (err: any) {
+      if (err.response) {
+        switch (err.response.status) {
+          case 400:
+            setError('Bad request. Please check your input.');
+            toast.error('Bad request. Please check your input.');
+            break;
+          case 409:
+            setError('Username or email already exists');
+            toast.error('Username or email already exists');
+            break;
+          case 500:
+            setError('Server error. Please try again later.');
+            toast.error('Server error. Please try again later.');
+            break;
+          default:
+            setError('Registration failed. Please try again.');
+            toast.error('Registration failed. Please try again.');
+            break;
+        }
+      } else {
+        setError('Network error. Please check your connection.');
+        toast.error('Network error. Please check your connection.');
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -118,6 +160,7 @@ export default function Register() {
               type="button"
               className="absolute right-3 top-8 text-gray-400"
               onClick={() => setShowPassword(!showPassword)}
+              title="Toggle password visibility"
             >
               {showPassword ? (
                 <EyeOff className="h-5 w-5" />
@@ -144,6 +187,7 @@ export default function Register() {
               type="button"
               className="absolute right-3 top-8 text-gray-400"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              title="Toggle password visibility"
             >
               {showConfirmPassword ? (
                 <EyeOff className="h-5 w-5" />
@@ -170,9 +214,14 @@ export default function Register() {
 
           <button
             type="submit"
-            className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-200"
+            className={`w-full ${
+              isSubmitting
+                ? 'bg-indigo-400 cursor-not-allowed'
+                : 'bg-indigo-600 hover:bg-indigo-700'
+            } text-white py-2 px-4 rounded-lg transition duration-200`}
+            disabled={isSubmitting}
           >
-            Create Account
+            {isSubmitting ? 'Creating...' : 'Create Account'}
           </button>
         </form>
 
