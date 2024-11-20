@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Layout } from '../components/Layout';
 import { ExperienceBar } from '../components/ExperienceBar';
 import { Button } from '../components/Button';
@@ -10,7 +10,11 @@ import api from '../lib/axios';
 type EditMode = 'profile' | 'password' | null;
 
 export default function Profile() {
-  const { user, setUser } = useAuthStore();
+  const { user, setUser } = useAuthStore((state) => ({
+    user: state.user,
+    setUser: state.setUser,
+  }));
+  
   const [editMode, setEditMode] = useState<EditMode>(null);
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -21,6 +25,14 @@ export default function Profile() {
   });
   const [error, setError] = useState('');
 
+  // Efeito para carregar os dados do usuário ao montar o componente
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser)); // Atualiza o estado com os dados armazenados
+    }
+  }, [setUser]);
+
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -28,7 +40,12 @@ export default function Profile() {
         name: formData.name,
         email: formData.email,
       });
-      setUser(response.data);
+
+      // Verifique se os dados de resposta estão corretos
+      if (response.data) {
+        setUser(response.data); // Atualiza o estado com os dados retornados pela API
+      }
+
       setEditMode(null);
       setError('');
     } catch (err) {
@@ -47,6 +64,7 @@ export default function Profile() {
         currentPassword: formData.currentPassword,
         newPassword: formData.newPassword,
       });
+
       setEditMode(null);
       setError('');
       setFormData({
@@ -59,6 +77,7 @@ export default function Profile() {
       setError('Failed to update password');
     }
   };
+  
 
   return (
     <Layout>

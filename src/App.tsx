@@ -13,8 +13,18 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
-
 function App() {
+  const { setUser } = useAuthStore();
+
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      // Simular a obtenção de dados do usuário (pode ser necessário fazer uma chamada à API)
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      setUser(user);  // Atualiza o estado com os dados do usuário
+    }
+  }, [setUser]);
+
   return (
     <BrowserRouter>
       <Routes>
