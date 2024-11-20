@@ -124,26 +124,25 @@ export default function Profile() {
       });
   
       if (response.data) {
-        // Atualiza o perfil
+        // Atualiza os dados locais do perfil, incluindo o e-mail
         setProfileData({
           name: response.data.name,
-          email: response.data.email,
-          newEmail: response.data.newEmail,
-          currentPassword: response.data.currentPassword,
+          email: response.data.email,  // Garante que o e-mail correto seja atribuído
+          newEmail: '', // Limpa o campo de novo e-mail
+          currentPassword: '', // Limpa a senha
           profilePicture: response.data.profilePicture,
         });
   
-        // Atualiza o estado global
+        // Atualiza o estado global com os dados atualizados (incluindo o e-mail)
         setUser(response.data);
+  
+        // Salva no localStorage para persistência
         localStorage.setItem('user', JSON.stringify(response.data));
   
-        setEditMode(null);
-        setError('');
+        setEditMode(null); // Fecha o modo de edição
+        setError(''); // Limpa os erros
       }
     } catch (err) {
-      console.error('Error:', err);
-      console.log("Senha atual:", profileData.currentPassword);
-
       setError('Failed to update profile');
     }
   };
@@ -257,17 +256,6 @@ export default function Profile() {
                   onChange={(e) =>
                     setProfileData({ ...profileData, name: e.target.value })
                   }
-                  required
-                />
-
-                <Input
-                  label="Email"
-                  type="email"
-                  value={profileData.email}
-                  onChange={(e) =>
-                    setProfileData({ ...profileData, email: e.target.value })
-                  }
-                  required
                 />
 
                 <Input
@@ -277,7 +265,6 @@ export default function Profile() {
                   onChange={(e) =>
                     setProfileData({ ...profileData, newEmail: e.target.value })
                   }
-                  required
                 />
 
                 <Input
