@@ -9,10 +9,14 @@ interface RankedUser {
   username: string;
   name: string;
   level: number;
-  experience: number;
+  xp: number;
   title: string;
   avatar?: string;
 }
+
+const calculateXpForNextLevel = (level: number) => {
+    return level * 800; // Exemplo: cada nível requer 800 XP a mais
+  };
 
 export default function Ranking() {
   const [users, setUsers] = useState<RankedUser[]>([]);
@@ -22,6 +26,8 @@ export default function Ranking() {
     loadRanking();
   }, []);
 
+  const nextLevelXp = calculateXpForNextLevel(selectedUser?.level || 1)
+
   const loadRanking = async () => {
     try {
       const response = await api.get('/user/ranking');
@@ -29,8 +35,8 @@ export default function Ranking() {
     } catch (error) {
       console.error('Failed to load ranking:', error);
     }
-  };
-
+  };;
+  
   const getMedalColor = (index: number) => {
     switch (index) {
       case 0:
@@ -108,9 +114,9 @@ export default function Ranking() {
                   <h2 className="text-xl font-bold text-gray-900">
                     {selectedUser.name}
                   </h2>
-                  <p className="text-gray-500 mb-2">@{selectedUser.username}</p>
+                  <p className="text-gray-500 mb-2">@{selectedUser.title}</p>
                   <div className="inline-flex items-center px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 text-sm font-medium mb-4">
-                    {selectedUser.title}
+                    {selectedUser.username}
                   </div>
                   <div className="w-full space-y-2">
                     <div className="flex justify-between text-sm">
@@ -120,13 +126,10 @@ export default function Ranking() {
                     <div className="flex justify-between text-sm mb-2">
                       <span className="text-gray-600">Experience</span>
                       <span className="font-medium">
-                        {selectedUser.experience}/100
+                      {selectedUser.xp}/{nextLevelXp} XP
                       </span>
                     </div>
-                    <ExperienceBar
-                      current={selectedUser.experience}
-                      max={100}
-                    />
+                    <ExperienceBar current={selectedUser.xp || 0} max={nextLevelXp} />
                   </div>
                 </div>
               </div>

@@ -76,21 +76,6 @@ export default function Dashboard() {
             quest.id === id ? { ...quest, completed: true } : quest
           )
         );
-  
-        // **Atualize o estado do perfil diretamente após completar a quest**
-        setProfileData((prevProfileData) => {
-          if (prevProfileData) {
-            const newXp = prevProfileData.xp + 50; // Aumente o XP conforme necessário
-            const newLevel = Math.floor(newXp / 100); // Calcule o nível com base no XP (exemplo simples)
-  
-            return {
-              ...prevProfileData,
-              xp: newXp,
-              level: newLevel,
-            };
-          }
-          return prevProfileData;
-        });
         
       } catch (error) {
         console.error('Failed to complete quest:', error);
