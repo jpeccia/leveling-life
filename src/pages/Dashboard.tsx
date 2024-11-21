@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Layout } from '../components/Layout';
 import { QuestCard } from '../components/QuestCard';
+import { useNavigate } from 'react-router-dom';
 import { FriendsList } from '../components/FriendsList';
 import api from '../lib/axios';
+import { MiniCalendar } from '../components/MiniCalendar';
+import { Plus } from 'lucide-react';
 
 interface Quest {
   id: string;
@@ -23,6 +26,7 @@ interface UserProfile {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [quests, setQuests] = useState<Quest[]>([]);
   const [profileData, setProfileData] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(false);
@@ -123,21 +127,29 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6" aria-live="polite">
-          Your Quests
-        </h1>
-        {loading ? (
-          <div className="text-center">Loading...</div>
-        ) : (
-          <div className="grid gap-6">
-            {error && <div className="text-red-500">{error}</div>}
-            {Object.entries(groupedQuests).map(([type, quests]) => (
-              <div key={type}>
-                <h2 className="text-lg font-semibold text-gray-700 mb-3 capitalize">
+      <div className="max-w-7xl mx-auto px-4 grid lg:grid-cols-4 gap-6">
+        {/* Main Content - Quests */}
+        <div className="lg:col-span-3 space-y-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-gray-900">Your Quests</h1>
+            <button
+              onClick={() => navigate('/quests/create')}
+              className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              <Plus className="h-5 w-5" />
+              <span>New Quest</span>
+            </button>
+          </div>
+
+          {Object.entries(groupedQuests).map(([type, quests]) => (
+            <div key={type} className="bg-white rounded-xl shadow-sm overflow-hidden">
+              <div className="p-4 bg-gray-50 border-b border-gray-100">
+                <h2 className="text-lg font-semibold text-gray-900 capitalize">
                   {type} Quests
                 </h2>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              </div>
+              <div className="p-4">
+                <div className="grid gap-4 sm:grid-cols-2">
                   {quests.map((quest) => (
                     <QuestCard
                       key={quest.id}
@@ -148,15 +160,24 @@ export default function Dashboard() {
                     />
                   ))}
                   {quests.length === 0 && (
-                    <p className="text-gray-500 text-sm">
-                      No {type} quests available
-                    </p>
+                    <div className="col-span-2 py-8">
+                      <p className="text-center text-gray-500">
+                        No {type} quests available
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>
-            ))}
+            </div>
+          ))}
+        </div>
+
+        {/* Sidebar - Calendar */}
+        <div className="space-y-6">
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <MiniCalendar onExpand={() => navigate('/calendar')} quests={quests} />
           </div>
-        )}
+        </div>
       </div>
       <FriendsList />
     </Layout>
