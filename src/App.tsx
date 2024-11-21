@@ -7,23 +7,22 @@ import Profile from './pages/Profile';
 import QuestCreation from './pages/QuestCreation';
 import { useEffect } from 'react';
 
+// Componente para rotas privadas
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
-  // Se a autenticação ainda está sendo verificada, exibe um loading
   if (isAuthenticated === undefined) {
-    return <div>Loading...</div>;
+    return <div>Carregando...</div>; // Pode ser um spinner ou outro componente
   }
 
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
 };
 
-function App() {
-
-  const { setUser, isAuthenticated } = useAuthStore();
+// Hook para sincronizar o estado global com o localStorage
+const useAuthSync = () => {
+  const { setUser } = useAuthStore();
 
   useEffect(() => {
-    // Função que verifica se os dados do usuário ou token mudaram
     const syncUserFromLocalStorage = () => {
       try {
         const token = localStorage.getItem('authToken');
@@ -31,66 +30,85 @@ function App() {
 
         if (token && user) {
           const parsedUser = JSON.parse(user);
-          setUser({ ...parsedUser, token }); // Passa o token junto
+          setUser({ ...parsedUser, token }); // Atualiza o estado global com os dados do usuário
+          fetchUser();
         } else {
-          setUser(null);
+          setUser(null); // Limpa o estado se não houver dados
         }
       } catch (error) {
         console.error('Erro ao sincronizar dados do localStorage:', error);
-        setUser(null); // Limpa os dados em caso de falha
+        setUser(null);
       }
     };
 
-    // Sincroniza a cada renderização, garantindo que a sessão esteja correta
     syncUserFromLocalStorage();
 
-    // Adiciona um listener para monitorar mudanças no localStorage
     const handleStorageChange = (event: StorageEvent) => {
       if ((event.key === 'user' || event.key === 'authToken') && event.oldValue !== event.newValue) {
-        syncUserFromLocalStorage();  // Atualiza os dados no estado global sempre que houver mudanças
+        syncUserFromLocalStorage();
       }
     };
 
     window.addEventListener('storage', handleStorageChange);
 
     return () => {
-      // Limpa o listener quando o componente for desmontado
       window.removeEventListener('storage', handleStorageChange);
     };
   }, [setUser]);
+};
+
+function App() {
+  // Sincroniza o estado global com o localStorage
+  useAuthSync();
+
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   return (
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route
-            path="/"
-            element={
-              <PrivateRoute>
-                <Dashboard />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <PrivateRoute>
-                <Profile />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/quests/create"
-            element={
-              <PrivateRoute>
-                <QuestCreation />
-              </PrivateRoute>
-            }
-          />
-        </Routes>
-      </BrowserRouter>
+    <BrowserRouter>
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            isAuthenticated ? <Navigate to="/" /> : <Login />
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            isAuthenticated ? <Navigate to="/" /> : <Register />
+          }
+        />
+        <Route
+          path="/"
+          element={
+            <PrivateRoute>
+              <Dashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <Profile />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/quests/create"
+          element={
+            <PrivateRoute>
+              <QuestCreation />
+            </PrivateRoute>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
 export default App;
+function fetchUser() {
+  throw new Error('Function not implemented.');
+}
+

@@ -47,7 +47,7 @@ export default function Profile() {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
-      setUser(parsedUser); // Atualiza o estado global com os dados do usuário
+      setUser(parsedUser); // Atualiza o estado global com os dados armazenados
     }
   }, [setUser]);
 
@@ -70,29 +70,32 @@ export default function Profile() {
     if (tempProfilePicture) {
       const formData = new FormData();
       formData.append('profilePicture', tempProfilePicture);
-
+  
       try {
         const response = await api.post('/user/update', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
         });
-
+  
         if (response.data) {
           const formattedProfilePicture = response.data.profilePicture.replace(/\\/g, '/'); // Corrige as barras invertidas
           
           // Atualiza o estado com o novo caminho da foto
           setProfileData((prev) => ({
             ...prev,
-            profilePicture: formattedProfilePicture, 
+            profilePicture: formattedProfilePicture,
           }));
-
+  
           // Atualiza o usuário no estado global com a foto corrigida
           setUser((prevUser) => ({
             ...prevUser,
             profilePicture: formattedProfilePicture,
           }));
-
+  
+          // Salva no localStorage para persistência
+          localStorage.setItem('user', JSON.stringify(response.data));
+  
           setTempProfilePicture(null);
           setModalOpen(false);
         }
@@ -101,10 +104,11 @@ export default function Profile() {
       }
     }
   };
+  
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     const token = localStorage.getItem('authToken');
   
     if (!token) {
@@ -113,37 +117,33 @@ export default function Profile() {
     }
   
     try {
-      const response = await api.post('/user/update', {
-        name: profileData.name,
-        newEmail: profileData.newEmail,
-        currentPassword: profileData.currentPassword
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`
+      const response = await api.post(
+        '/user/update',
+        {
+          name: profileData.name,
+          newEmail: profileData.newEmail,
+          currentPassword: profileData.currentPassword,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      });
+      );
   
-      if (response.data) {
-        // Atualiza os dados locais do perfil, incluindo o e-mail
-        setProfileData({
-          name: response.data.name,
-          email: response.data.email,  // Garante que o e-mail correto seja atribuído
-          newEmail: '', // Limpa o campo de novo e-mail
-          currentPassword: '', // Limpa a senha
-          profilePicture: response.data.profilePicture,
-        });
+      if (response.status === 200) {
+        // Sincronize os dados do usuário após a atualização
+        const { fetchUser } = useAuthStore.getState();
+        await fetchUser();
   
-        // Atualiza o estado global com os dados atualizados (incluindo o e-mail)
-        setUser(response.data);
-  
-        // Salva no localStorage para persistência
-        localStorage.setItem('user', JSON.stringify(response.data));
-  
-        setEditMode(null); // Fecha o modo de edição
-        setError(''); // Limpa os erros
+        setEditMode(null); // Sai do modo de edição
+        toast.success('Perfil atualizado com sucesso!');
+      } else {
+        setError(`Erro ao atualizar perfil: ${response.data.message || 'Desconhecido'}`);
       }
-    } catch (err) {
-      setError('Failed to update profile');
+    } catch (err: any) {
+      console.error('Erro ao atualizar perfil:', err);
+      setError(err.response?.data?.message || 'Falha ao atualizar o perfil.');
     }
   };
   
