@@ -69,7 +69,8 @@ export default function Dashboard() {
       try {
         // Marque a quest como completada
         await api.put(`/quests/${id}/complete`); 
-  
+        loadQuests();
+        loadProfile();
         // Atualiza o estado de quests local
         setQuests((prevQuests) =>
           prevQuests.map((quest) =>
@@ -95,6 +96,7 @@ export default function Dashboard() {
     try {
       await api.delete(`/quests/${id}`);  // Chama o endpoint para deletar a quest
       setQuests((prevQuests) => prevQuests.filter((quest) => quest.id !== id));  // Remove a quest da lista
+      loadQuests();
     } catch (error) {
       console.error('Failed to delete quest:', error);
       setError('Failed to delete quest. Please try again later.');  // Mensagem de erro

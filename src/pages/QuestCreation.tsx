@@ -17,23 +17,26 @@ export default function QuestCreation() {
     title: '',
     description: '',
     type: 'DAILY' as QuestType,
+    dueDate: new Date(), // Data de vencimento inicial
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title || !formData.description) {
+    if (!formData.title || !formData.description || !formData.dueDate) {
       setError('Please fill in all fields');
-      toast.error('Please fill in all fields'); // Notificação de erro
+      toast.error('Please fill in all fields');
       return;
     }
     setLoading(true);
     try {
-      await api.post('/quests/', formData);
-      toast.success('Quest created successfully!'); // Notificação de sucesso
+      // Garantir que a data seja formatada corretamente (ISO-8601)
+      const formattedDueDate = formData.dueDate.toISOString();
+      await api.post('/quests/', { ...formData, dueDate: formattedDueDate });
+      toast.success('Quest created successfully!');
       navigate('/');
     } catch (err) {
       setError('Failed to create quest');
-      toast.error('Failed to create quest'); // Notificação de erro
+      toast.error('Failed to create quest');
     } finally {
       setLoading(false);
     }
@@ -44,6 +47,10 @@ export default function QuestCreation() {
     { value: 'WEEKLY', label: 'Weekly' },
     { value: 'MONTHLY', label: 'Monthly' },
   ];
+
+  const handleQuestTypeChange = (type: QuestType) => {
+    setFormData({ ...formData, type });
+  };
 
   return (
     <Layout>
@@ -95,7 +102,7 @@ export default function QuestCreation() {
                       type="radio"
                       value={type.value}
                       checked={formData.type === type.value}
-                      onChange={() => setFormData({ ...formData, type: type.value })}
+                      onChange={() => handleQuestTypeChange(type.value)}
                       className="hidden"
                     />
                     <div

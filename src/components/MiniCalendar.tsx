@@ -34,6 +34,10 @@ export function MiniCalendar({ onExpand, quests }: MiniCalendarProps) {
   };
 
   const getDayQuests = (day: number) => {
+    if (!quests || !Array.isArray(quests)) {
+      return []; // Retorna um array vazio se quests não for um array válido
+    }
+  
     return quests.filter(quest => {
       const expirationDate = new Date(quest.expiresAt);
       return expirationDate.getDate() === day &&

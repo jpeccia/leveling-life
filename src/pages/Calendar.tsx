@@ -23,7 +23,7 @@ export default function Calendar() {
 
   const loadQuests = async () => {
     try {
-      const response = await api.get('/quests/calendar', {
+      const response = await api.get('/quests/', {
         params: {
           year: currentDate.getFullYear(),
           month: currentDate.getMonth() + 1,
