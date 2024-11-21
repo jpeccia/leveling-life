@@ -66,6 +66,7 @@ export default function Profile() {
     }
   };
 
+  // Salva a nova foto de perfil
   const handleSavePhoto = async () => {
     if (tempProfilePicture) {
       const formData = new FormData();
@@ -75,32 +76,38 @@ export default function Profile() {
         const response = await api.post('/user/update', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
           },
         });
   
         if (response.data) {
           const formattedProfilePicture = response.data.profilePicture.replace(/\\/g, '/'); // Corrige as barras invertidas
-          
+  
           // Atualiza o estado com o novo caminho da foto
           setProfileData((prev) => ({
             ...prev,
             profilePicture: formattedProfilePicture,
           }));
   
-          // Atualiza o usuário no estado global com a foto corrigida
+          // Atualiza o estado global com a foto corrigida (se necessário)
           setUser((prevUser) => ({
             ...prevUser,
             profilePicture: formattedProfilePicture,
           }));
   
-          // Salva no localStorage para persistência
+          // Atualiza o localStorage com os dados do usuário
           localStorage.setItem('user', JSON.stringify(response.data));
   
+          // Limpa o estado temporário da imagem e fecha o modal
           setTempProfilePicture(null);
           setModalOpen(false);
+  
+          toast.success('Foto de perfil atualizada com sucesso!');
         }
       } catch (err) {
-        setError('Failed to update profile picture');
+        console.error(err);
+        setError('Falha ao atualizar a foto de perfil.');
+        toast.error('Falha ao atualizar a foto de perfil.');
       }
     }
   };
@@ -116,36 +123,43 @@ export default function Profile() {
       return;
     }
   
-    try {
-      const response = await api.post(
-        '/user/update',
-        {
-          name: profileData.name,
-          newEmail: profileData.newEmail,
-          currentPassword: profileData.currentPassword,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-  
-      if (response.status === 200) {
-        // Sincronize os dados do usuário após a atualização
-        const { fetchUser } = useAuthStore.getState();
-        await fetchUser();
-  
-        setEditMode(null); // Sai do modo de edição
-        toast.success('Perfil atualizado com sucesso!');
-      } else {
-        setError(`Erro ao atualizar perfil: ${response.data.message || 'Desconhecido'}`);
-      }
-    } catch (err: any) {
-      console.error('Erro ao atualizar perfil:', err);
-      setError(err.response?.data?.message || 'Falha ao atualizar o perfil.');
-    }
+  // Verifica se o email foi alterado e é um valor válido
+  const updatedData: any = {
+    name: profileData.name,
+    currentPassword: profileData.currentPassword,
   };
+
+  // Só adiciona o newEmail se for um valor válido
+  if (profileData.newEmail && profileData.newEmail.trim() !== "") {
+    updatedData.newEmail = profileData.newEmail;
+  }
+
+  try {
+    const response = await api.post(
+      '/user/update',
+      updatedData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (response.status === 200) {
+      // Sincronize os dados do usuário após a atualização
+      const { fetchUser } = useAuthStore.getState();
+      await fetchUser();
+
+      setEditMode(null); // Sai do modo de edição
+      toast.success('Perfil atualizado com sucesso!');
+    } else {
+      setError(`Erro ao atualizar perfil: ${response.data.message || 'Desconhecido'}`);
+    }
+  } catch (err: any) {
+    console.error('Erro ao atualizar perfil:', err);
+    setError(err.response?.data?.message || 'Falha ao atualizar o perfil.');
+  }
+};
   
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
@@ -180,7 +194,7 @@ export default function Profile() {
           <div className="flex flex-col items-center mb-8">
             <div className="relative group">
               <img
-                src={formattedProfilePicture || `https://ui-avatars.com/api/?name=${user?.name}`}
+                src={`http://localhost:8080/profile-picture/${user?.username}`}
                 alt={user?.name}
                 className="w-32 h-32 rounded-full shadow-lg"
               />
