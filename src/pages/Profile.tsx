@@ -43,6 +43,8 @@ export default function Profile() {
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(false); // Novo estado para controlar o carregamento
+  const { fetchUser } = useAuthStore();
+
 
 
   useEffect(() => {
@@ -52,8 +54,6 @@ export default function Profile() {
       setUser(parsedUser); // Atualiza o estado global com os dados armazenados
     }
   }, [setUser]);
-
-  const formattedProfilePicture = profileData.profilePicture?.replace(/\\/g, '/');
 
   const calculateXpForNextLevel = (level: number) => {
     return level * 800; // Exemplo: cada nível requer 800 XP a mais
@@ -82,22 +82,17 @@ export default function Profile() {
         },
       });
   
-      if (response.data) {
+      if (response.data && response.data.profilePicture) {
         const formattedProfilePicture = response.data.profilePicture.replace(/\\/g, '/'); // Corrige as barras invertidas
         setProfileData((prev) => ({
           ...prev,
           profilePicture: formattedProfilePicture,
         }));
-  
-        setUser((prevUser) => ({
-          ...prevUser,
-          profilePicture: formattedProfilePicture,
-        }));
-  
-        // Atualiza o localStorage com os dados atualizados
-        localStorage.setItem('user', JSON.stringify(response.data));
+        await fetchUser(); // Recarrega os dados do usuário
   
         toast.success('Foto de perfil atualizada com sucesso!');
+      } else {
+        toast.error('Erro ao atualizar a foto de perfil. A resposta não contém a foto.');
       }
     } catch (err) {
       console.error(err);
@@ -110,6 +105,7 @@ export default function Profile() {
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
   
     const token = localStorage.getItem('authToken');
   
@@ -118,57 +114,101 @@ export default function Profile() {
       return;
     }
   
-  // Verifica se o email foi alterado e é um valor válido
-  const updatedData: any = {
-    name: profileData.name,
-    currentPassword: profileData.currentPassword,
-  };
-
-  // Só adiciona o newEmail se for um valor válido
-  if (profileData.newEmail && profileData.newEmail.trim() !== "") {
-    updatedData.newEmail = profileData.newEmail;
-  }
-
-  try {
-    const response = await api.post(
-      '/user/update',
-      updatedData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    if (response.status === 200) {
-      // Sincronize os dados do usuário após a atualização
-      const { fetchUser } = useAuthStore.getState();
-      await fetchUser();
-
-      setEditMode(null); // Sai do modo de edição
-      toast.success('Perfil atualizado com sucesso!');
-    } else {
-      setError(`Erro ao atualizar perfil: ${response.data.message || 'Desconhecido'}`);
-    }
-  } catch (err: any) {
-    console.error('Erro ao atualizar perfil:', err);
-    setError(err.response?.data?.message || 'Falha ao atualizar o perfil.');
-  }
-};
+    // Verifica se a senha atual é fornecida para a atualização
+    if (profileData.currentPassword) {
+      try {
+        // Valida se a senha atual está correta (requisição ao backend)
+        const passwordCheckResponse = await api.post(
+          '/user/check-password',
+          { currentPassword: profileData.currentPassword },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
   
-
+        if (passwordCheckResponse.status !== 200) {
+          setError('Senha atual incorreta.');
+          return;
+        }
+      } catch (err) {
+        setError('Erro ao verificar a senha atual.');
+        console.error('Erro ao verificar a senha atual:', err);
+        return;
+      }
+    }
+  
+    const updatedData: any = {
+      name: profileData.name,
+      currentPassword: profileData.currentPassword,
+    };
+  
+    if (profileData.newEmail && profileData.newEmail.trim() !== "") {
+      updatedData.newEmail = profileData.newEmail;
+    }
+  
+    try {
+      const response = await api.post(
+        '/user/update',
+        updatedData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      if (response.status === 200) {
+        const { fetchUser } = useAuthStore.getState();
+        await fetchUser();
+        setEditMode(null); // Sai do modo de edição
+        toast.success('Perfil atualizado com sucesso!');
+      } else {
+        setError(`Erro ao atualizar perfil: ${response.data.message || 'Desconhecido'}`);
+      }
+    } catch (err: any) {
+      console.error('Erro ao atualizar perfil:', err);
+      setError(err.response?.data?.message || 'Falha ao atualizar o perfil.');
+    }
+  };
+  
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setError('Passwords do not match');
+      setError('As senhas não coincidem');
       return;
     }
+  
+    if (!passwordData.currentPassword) {
+      setError('Senha atual é obrigatória.');
+      return;
+    }
+  
     try {
+      // Verifica a senha atual antes de atualizar a senha
+      const passwordCheckResponse = await api.post(
+        '/user/check-password',
+        { currentPassword: passwordData.currentPassword },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+          },
+        }
+      );
+  
+      if (passwordCheckResponse.status !== 200) {
+        setError('Senha atual incorreta.');
+        return;
+      }
+  
+      // Se a senha atual estiver correta, então atualiza a nova senha
       await api.post('/user/update', {
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword,
       });
-
+  
       setEditMode(null);
       setError('');
       setPasswordData({
@@ -176,9 +216,10 @@ export default function Profile() {
         newPassword: '',
         confirmPassword: '',
       });
-      toast.success("Password changed successfully!")
+      toast.success("Senha alterada com sucesso!");
     } catch (err) {
-      setError('Failed to update password');
+      setError('Falha ao atualizar a senha');
+      console.error(err);
     }
   };
 
@@ -189,8 +230,8 @@ export default function Profile() {
           <div className="flex flex-col items-center mb-8">
             <div className="relative group">
               <img
-                src={`http://localhost:8080/profile-picture/${user?.username}`}
-                alt={user?.name}
+              src={user?.profilePicture ? `http://localhost:8080/${user.profilePicture}` : `https://ui-avatars.com/api/?name=${user?.name}`}
+              alt={user?.name}
                 className="w-32 h-32 rounded-full shadow-lg"
               />
               <button
