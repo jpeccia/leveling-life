@@ -5,7 +5,7 @@ interface Quest {
   id: string;
   title: string;
   type: 'DAILY' | 'WEEKLY' | 'MONTHLY';
-  expiresAt: string;
+  dueDate: string; // Alterado para 'dueDate'
   completed: boolean;
 }
 
@@ -39,10 +39,15 @@ export function MiniCalendar({ onExpand, quests }: MiniCalendarProps) {
     }
   
     return quests.filter(quest => {
-      const expirationDate = new Date(quest.expiresAt);
-      return expirationDate.getDate() === day &&
-             expirationDate.getMonth() === currentDate.getMonth() &&
-             expirationDate.getFullYear() === currentDate.getFullYear();
+      const dueDate = new Date(quest.dueDate);
+      
+      // Formata a data de dueDate e a data do dia para comparação
+      const formattedDueDate = dueDate.toISOString().split('T')[0];  // Formato YYYY-MM-DD
+      const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+      const formattedTargetDate = targetDate.toISOString().split('T')[0];  // Formato YYYY-MM-DD
+
+      // Compara as duas datas
+      return formattedDueDate === formattedTargetDate;
     });
   };
 
@@ -75,12 +80,11 @@ export function MiniCalendar({ onExpand, quests }: MiniCalendarProps) {
         <div
           key={day}
           className={`h-8 relative flex items-center justify-center text-sm
-            ${isToday ? 'bg-indigo-50' : ''}
+            ${isToday ? 'bg-indigo-50' : ''} 
             ${hasQuests ? 'font-medium' : ''}
           `}
         >
-          <span className={`
-            flex items-center justify-center w-6 h-6 rounded-full
+          <span className={`flex items-center justify-center w-6 h-6 rounded-full
             ${isToday ? 'bg-indigo-600 text-white' : 'text-gray-700'}
             ${hasQuests && !isToday ? 'text-indigo-600' : ''}
           `}>
@@ -136,9 +140,9 @@ export function MiniCalendar({ onExpand, quests }: MiniCalendarProps) {
 
       <div>
         <div className="grid grid-cols-7 bg-gray-50">
-          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) => (
+          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
             <div
-              key={day}
+              key={index} // Usando o índice como chave
               className="h-8 flex items-center justify-center text-xs font-medium text-gray-500"
             >
               {day}

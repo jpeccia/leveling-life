@@ -81,23 +81,10 @@ export default function Profile() {
     }
   };
 
-  const isImageAccessible = async (url) => {
-    try {
-      const response = await fetch(url, { method: 'HEAD' });
-      if (response.ok && response.headers.get('Content-Type').includes('image')) {
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error('Erro ao acessar a imagem:', error);
-      return false;
-    }
-  };
-
   const handleSavePhoto = async () => {
 
-      // Obter o nível do usuário (supondo que você tenha essa informação disponível em algum lugar)
-    const userLevel = profileData.level;  // Substitua com a maneira que você armazena o nível do usuário.
+    // Obter o nível do usuário (supondo que você tenha essa informação disponível em algum lugar)
+    const userLevel = profileData.level; 
     if (!tempProfilePicture) return;
   
     // Verificar se a URL é válida
@@ -118,12 +105,6 @@ export default function Profile() {
     return;
   }
   
-    // Verificar se a imagem está acessível
-    const imageAccessible = await isImageAccessible(tempProfilePicture);
-    if (!imageAccessible) {
-      toast.error('A imagem não pôde ser carregada.');
-      return;
-    }
   
     setLoading(true);
     try {
@@ -394,29 +375,70 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Modal de foto de perfil */}
-      {modalOpen && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
-            <h2 className="text-lg font-semibold mb-4">Update Profile Picture</h2>
-            <Input
-              type="text"
-              value={tempProfilePicture || ''}
-              onChange={handlePhotoChange}
-              placeholder="Enter image URL"
-              className="mb-4" label={''}            />
-            {tempProfilePicture && (
-              <div className="mb-4">
-                <img src={tempProfilePicture} alt="Preview" className="w-32 h-32 object-cover rounded-lg" />
-              </div>
-            )}
-            <div className="flex space-x-4">
-              <Button onClick={handleSavePhoto} disabled={loading}>Save</Button>
-              <Button onClick={() => setModalOpen(false)} className="bg-gray-300">Cancel</Button>
-            </div>
-          </div>
+{/* Modal de foto de perfil */}
+{modalOpen && (
+  <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+    <div className="bg-white p-8 rounded-lg shadow-lg max-w-lg w-full transform transition-all scale-95 hover:scale-100">
+      <h2 className="text-2xl font-semibold text-center text-blue-600 mb-6">Atualizar Foto de Perfil</h2>
+      
+      {/* Input para URL da foto */}
+      <div className="mb-6">
+        <Input
+          type="text"
+          value={tempProfilePicture || ''}
+          onChange={handlePhotoChange}
+          placeholder="Digite a URL da imagem"
+          className="w-full px-4 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+          label={''}
+        />
+      </div>
+      
+      {/* Preview da imagem */}
+      {tempProfilePicture && (
+        <div className="mb-4 flex justify-center">
+          <img
+            src={tempProfilePicture}
+            alt="Preview"
+            className="w-32 h-32 object-cover rounded-full border-4 border-blue-500"
+          />
         </div>
       )}
+      
+      {/* Validação de URL */}
+      {tempProfilePicture && !isValidUrl(tempProfilePicture) && (
+        <p className="text-red-500 text-sm text-center mb-4">A URL fornecida não é uma imagem válida.</p>
+      )}
+      
+      {/* Carregamento */}
+      {loading && (
+        <div className="flex justify-center mb-4">
+          <div className="spinner-border animate-spin border-4 border-t-4 border-blue-600 rounded-full w-8 h-8"></div>
+        </div>
+      )}
+
+      {/* Botões */}
+      <div className="flex justify-center space-x-6 mt-6">
+        {/* Botão de salvar */}
+        <Button 
+          onClick={handleSavePhoto} 
+          disabled={loading || !isValidUrl(tempProfilePicture)} 
+          className="bg-blue-600 text-white hover:bg-blue-700 transition-all px-6 py-2 rounded-md font-semibold shadow-lg transform active:scale-95"
+        >
+          <i className="fas fa-save mr-2"></i> Salvar
+        </Button>
+        
+        {/* Botão de cancelar */}
+        <Button 
+          onClick={() => setModalOpen(false)} 
+          className="bg-gray-300 text-gray-700 hover:bg-gray-400 transition-all px-6 py-2 rounded-md font-semibold shadow-lg transform active:scale-95"
+        >
+          <i className="fas fa-times mr-2"></i> Cancelar
+        </Button>
+      </div>
+    </div>
+  </div>
+)}
+
     </Layout>
   );
 }

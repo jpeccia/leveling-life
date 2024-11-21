@@ -9,7 +9,7 @@ interface Quest {
   description: string;
   type: 'DAILY' | 'WEEKLY' | 'MONTHLY';
   createdAt: string;
-  expiresAt: string;
+  dueDate: string;  // Atualizado para 'dueDate'
   completed: boolean;
 }
 
@@ -53,12 +53,20 @@ export default function Calendar() {
 
   const getDayQuests = (day: number) => {
     return quests.filter(quest => {
-      const expirationDate = new Date(quest.expiresAt);
-      return expirationDate.getDate() === day &&
-             expirationDate.getMonth() === currentDate.getMonth() &&
-             expirationDate.getFullYear() === currentDate.getFullYear();
+      const dueDate = new Date(quest.dueDate);
+      // Garantir que o dueDate tenha apenas a data, sem considerar a hora
+      const formattedDueDate = dueDate.toISOString().split('T')[0];  // Formato YYYY-MM-DD
+  
+      // Cria a data para o dia atual (currentDate) e formata também
+      const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+      const formattedTargetDate = targetDate.toISOString().split('T')[0];  // Formato YYYY-MM-DD
+  
+      // Compara as duas datas formatadas, sem considerar horas ou minutos
+      return formattedDueDate === formattedTargetDate;
     });
   };
+  
+  
 
   const getQuestTypeStyles = (type: string) => {
     switch (type) {
@@ -82,17 +90,14 @@ export default function Calendar() {
       'July', 'August', 'September', 'October', 'November', 'December'
     ];
 
-    // Add empty cells for days before the first day of the month
+    // Adicionando células vazias para os dias antes do primeiro dia do mês
     for (let i = 0; i < firstDay; i++) {
       days.push(
-        <div 
-          key={`empty-${i}`} 
-          className="h-32 bg-gray-50/30 border border-gray-100"
-        />
+        <div key={`empty-${i}`} className="h-32 bg-gray-50/30 border border-gray-100" />
       );
     }
 
-    // Add cells for each day of the month
+    // Adicionando células para cada dia do mês
     for (let day = 1; day <= daysInMonth; day++) {
       const dayQuests = getDayQuests(day);
       const isToday = new Date().getDate() === day &&
@@ -102,32 +107,16 @@ export default function Calendar() {
       days.push(
         <div
           key={day}
-          className={`relative h-32 p-1 border border-gray-100 transition-colors ${
-            isToday 
-              ? 'bg-indigo-50/50' 
-              : 'bg-white hover:bg-gray-50/50'
-          }`}
+          className={`relative h-32 p-1 border border-gray-100 transition-colors ${isToday ? 'bg-indigo-50/50' : 'bg-white hover:bg-gray-50/50'}`}
         >
-          <div className={`
-            absolute top-1 left-1 w-6 h-6 flex items-center justify-center
-            rounded-full text-sm font-medium
-            ${isToday 
-              ? 'bg-indigo-600 text-white' 
-              : 'text-gray-700'
-            }
-          `}>
+          <div className={`absolute top-1 left-1 w-6 h-6 flex items-center justify-center rounded-full text-sm font-medium ${isToday ? 'bg-indigo-600 text-white' : 'text-gray-700'}`}>
             {day}
           </div>
           <div className="mt-8 space-y-1 max-h-[5.5rem] overflow-y-auto scrollbar-thin">
             {dayQuests.map((quest) => (
               <div
                 key={quest.id}
-                className={`
-                  px-2 py-1 text-xs rounded-md border
-                  ${getQuestTypeStyles(quest.type)}
-                  ${quest.completed ? 'opacity-50' : ''}
-                  truncate
-                `}
+                className={`px-2 py-1 text-xs rounded-md border ${getQuestTypeStyles(quest.type)} ${quest.completed ? 'opacity-50' : ''} truncate`}
                 title={`${quest.title} (${quest.type.toLowerCase()})`}
               >
                 {quest.title}
@@ -151,16 +140,10 @@ export default function Calendar() {
               </h1>
             </div>
             <div className="flex space-x-1">
-              <button
-                onClick={previousMonth}
-                className="p-2 hover:bg-gray-50 rounded-lg transition-colors"
-              >
+              <button onClick={previousMonth} className="p-2 hover:bg-gray-50 rounded-lg transition-colors">
                 <ChevronLeft className="h-5 w-5 text-gray-600" />
               </button>
-              <button
-                onClick={nextMonth}
-                className="p-2 hover:bg-gray-50 rounded-lg transition-colors"
-              >
+              <button onClick={nextMonth} className="p-2 hover:bg-gray-50 rounded-lg transition-colors">
                 <ChevronRight className="h-5 w-5 text-gray-600" />
               </button>
             </div>
@@ -184,18 +167,13 @@ export default function Calendar() {
 
         <div className="grid grid-cols-7 bg-gray-50/50 border-b border-gray-100">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-            <div 
-              key={day} 
-              className="text-center py-2 text-sm font-medium text-gray-600"
-            >
+            <div key={day} className="text-center py-2 text-sm font-medium text-gray-600">
               {day}
             </div>
           ))}
         </div>
 
-        <div className="grid grid-cols-7">
-          {days}
-        </div>
+        <div className="grid grid-cols-7">{days}</div>
       </div>
     );
   };

@@ -90,9 +90,7 @@ export const useAuthStore = create<AuthState>((set) => {
             Authorization: `Bearer ${token}`,
           },
         });
-    
-        console.log('Resposta do servidor:', response);  // Verifique o conteúdo da resposta
-    
+      
         if (response.status === 200) {
           const userData = response.data;
           set((state) => ({

@@ -73,7 +73,7 @@ export default function Ranking() {
                     selectedUser?.id === user.id
                       ? 'bg-indigo-50'
                       : 'hover:bg-gray-50'
-                  }`}
+                  } ${index < 10 ? 'border border-gray-300' : ''} ${index < 10 ? 'animate-subtleElectrifying' : ''}`}
                 >
                   <div className="flex-shrink-0 w-8 text-center">
                     {index < 3 ? (

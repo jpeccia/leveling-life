@@ -112,11 +112,31 @@ export default function Dashboard() {
   const handleSaveChanges = async () => {
     if (!editQuestData) return;
     setLoading(true);
+  
+    // Mapeamento de XP com base no tipo da quest
+    const xpByType = {
+      DAILY: 100,   // XP para quests diárias
+      WEEKLY: 1000,  // XP para quests semanais
+      MONTHLY: 4500 // XP para quests mensais
+    };
+  
+    // Atualizando o XP com base no tipo selecionado
+    const updatedQuestData = {
+      ...editQuestData,
+      xp: xpByType[editQuestData.type] // Atribuindo o XP conforme o tipo
+    };
+  
     try {
-      const response = await api.put(`/quests/${editQuestData.id}`, editQuestData);
+      // Enviando a requisição PUT com os dados atualizados, incluindo o XP
+      const response = await api.put(`/quests/${updatedQuestData.id}`, updatedQuestData);
+  
+      // Atualizando o estado das quests na interface com a resposta da API
       setQuests((prevQuests) =>
-        prevQuests.map((quest) => (quest.id === editQuestData.id ? response.data : quest))
+        prevQuests.map((quest) =>
+          quest.id === updatedQuestData.id ? response.data : quest
+        )
       );
+  
       toast.success('Quest updated successfully!');
       setShowEditModal(false);
     } catch (error) {

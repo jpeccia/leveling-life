@@ -6,6 +6,8 @@ import { Input } from '../components/Input';
 import { Clock, AlertCircle } from 'lucide-react';
 import api from '../lib/axios';
 import { toast } from 'sonner';
+import Calendar from 'react-calendar'; // Importando o componente do calendário
+import 'react-calendar/dist/Calendar.css'; // Importando o estilo do calendário
 
 type QuestType = 'DAILY' | 'WEEKLY' | 'MONTHLY';
 
@@ -22,15 +24,23 @@ export default function QuestCreation() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+  
     if (!formData.title || !formData.description || !formData.dueDate) {
       setError('Please fill in all fields');
       toast.error('Please fill in all fields');
       return;
     }
+  
     setLoading(true);
     try {
-      // Garantir que a data seja formatada corretamente (ISO-8601)
-      const formattedDueDate = formData.dueDate.toISOString();
+      let dueDate = formData.dueDate;
+      if (typeof dueDate === 'string') {
+        dueDate = new Date(dueDate);
+        dueDate.setHours(0, 0, 0, 0); // Garantir que a hora seja zero para evitar problemas de fuso horário
+      }
+      
+      const formattedDueDate = dueDate.toISOString();
+  
       await api.post('/quests/', { ...formData, dueDate: formattedDueDate });
       toast.success('Quest created successfully!');
       navigate('/');
@@ -50,6 +60,33 @@ export default function QuestCreation() {
 
   const handleQuestTypeChange = (type: QuestType) => {
     setFormData({ ...formData, type });
+  };
+
+  // Função para atualizar a data ao selecionar no calendário
+  const handleDateChange = (date: Date) => {
+    setFormData({ ...formData, dueDate: date });
+  };
+
+  // Função para definir a data máxima no calendário
+  const getMaxDate = () => {
+    const today = new Date();
+    if (formData.type === 'WEEKLY') {
+      // Para "SEMANAL", limite de 7 dias
+      today.setDate(today.getDate() + 7);
+    } else if (formData.type === 'MONTHLY') {
+      // Para "MENSAL", limite de 2 meses
+      today.setMonth(today.getMonth() + 2);
+    }
+    return today;
+  };
+
+  const getMinDate = () => {
+    const today = new Date();
+    if (formData.type === 'DAILY') {
+      // Para "DIÁRIO", o calendário não mostra nada
+      return today;
+    }
+    return today;
   };
 
   return (
@@ -106,11 +143,9 @@ export default function QuestCreation() {
                       className="hidden"
                     />
                     <div
-                      className={`p-4 rounded-lg border-2 transition-colors ${
-                        formData.type === type.value
-                          ? 'border-indigo-600 bg-indigo-50 text-indigo-600'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
+                      className={`p-4 rounded-lg border-2 transition-colors ${formData.type === type.value
+                        ? 'border-indigo-600 bg-indigo-50 text-indigo-600'
+                        : 'border-gray-200 hover:border-gray-300'}`}
                     >
                       <div className="text-center">
                         <div className="font-medium">{type.label}</div>
@@ -126,6 +161,21 @@ export default function QuestCreation() {
                   </label>
                 ))}
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+              </label>
+              {/* Condicional para exibir o calendário conforme o tipo de quest */}
+              {formData.type !== 'DAILY' && (
+                <Calendar
+                  onChange={handleDateChange}
+                  value={formData.dueDate}
+                  minDate={getMinDate()}
+                  maxDate={getMaxDate()}
+                  className="border p-2 rounded-lg w-full"
+                />
+              )}
             </div>
 
             <div className="flex space-x-4">
