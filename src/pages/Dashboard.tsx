@@ -6,6 +6,10 @@ import { FriendsList } from '../components/FriendsList';
 import api from '../lib/axios';
 import { MiniCalendar } from '../components/MiniCalendar';
 import { Plus } from 'lucide-react';
+import { toast } from 'sonner';
+import { useAuthStore } from '../store/authStore';
+import { Dialog } from '@headlessui/react';  // Importando o Dialog para os modais
+import { Spinner } from '../components/Spinner'; // Spinner para mostrar durante o carregamento
 
 interface Quest {
   id: string;
@@ -31,75 +35,92 @@ export default function Dashboard() {
   const [profileData, setProfileData] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { fetchUser } = useAuthStore();
+
+  // Modal states
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false); // Modal de edição
+  const [selectedQuest, setSelectedQuest] = useState<Quest | null>(null);
+  const [editQuestData, setEditQuestData] = useState<Quest | null>(null); // Dados para edição
 
   useEffect(() => {
     loadQuests();
     loadProfile();
   }, []);
 
-  // Função para carregar as quests
   const loadQuests = async () => {
-    setLoading(true);
     try {
       const response = await api.get('/quests/');
-      setQuests(response.data);  // Atualiza o estado com os dados recebidos
-      setError(null);  // Reseta o erro se a requisição for bem-sucedida
+      setQuests(response.data);
     } catch (error) {
       console.error('Failed to load quests:', error);
-      setError('Failed to load quests. Please try again later.');  // Mensagem de erro
+      toast.error('Failed to load quests. Please try again later.');
+    }
+  };
+
+  const loadProfile = async () => {
+    try {
+      const response = await api.get('/user/');
+      setProfileData(response.data);
+    } catch (error) {
+      console.error('Failed to load profile:', error);
+      toast.error('Failed to load profile. Please try again later.');
+      setError('Failed to load profile. Please try again later.');
+    }
+  };
+
+  const handleCompleteQuest = async () => {
+    if (!selectedQuest) return;
+    setLoading(true);
+    try {
+      await api.put(`/quests/${selectedQuest.id}/complete`);
+      await fetchUser();  // Recarrega os dados do usuário após completar a quest
+      toast.success('Quest completed successfully!');
+      setShowCompleteModal(false);
+      loadQuests();
+    } catch (error) {
+      console.error('Failed to complete quest:', error);
+      toast.error('Failed to complete quest. Please try again later.');
     } finally {
       setLoading(false);
     }
   };
 
-    // Função para carregar os dados do perfil
-    const loadProfile = async () => {
-      try {
-        const response = await api.get('/user/');
-        setProfileData(response.data);  // Atualiza o estado com os dados do perfil
-      } catch (error) {
-        console.error('Failed to load profile:', error);
-        setError('Failed to load profile.');
-      }
-    };
-  
-    // Função para completar uma quest
-    const handleCompleteQuest = async (id: string) => {
-      setLoading(true);
-      try {
-        // Marque a quest como completada
-        await api.put(`/quests/${id}/complete`); 
-        loadQuests();
-        loadProfile();
-        // Atualiza o estado de quests local
-        setQuests((prevQuests) =>
-          prevQuests.map((quest) =>
-            quest.id === id ? { ...quest, completed: true } : quest
-          )
-        );
-        
-      } catch (error) {
-        console.error('Failed to complete quest:', error);
-        setError('Failed to complete quest. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
-  // Função para editar uma quest
-  const handleEditQuest = (quest: Quest) => {
-    console.log('Edit quest:', quest);  // Apenas um log por enquanto
-  };
-
-  // Função para deletar uma quest
-  const handleDeleteQuest = async (id: string) => {
-    setLoading(true);  // Coloca o estado de loading como true enquanto deleta a quest
+  const handleDeleteQuest = async () => {
+    if (!selectedQuest) return;
+    setLoading(true);
     try {
-      await api.delete(`/quests/${id}`);  // Chama o endpoint para deletar a quest
-      setQuests((prevQuests) => prevQuests.filter((quest) => quest.id !== id));  // Remove a quest da lista
-      loadQuests();
+      await api.delete(`/quests/${selectedQuest.id}`);
+      setQuests((prevQuests) => prevQuests.filter((quest) => quest.id !== selectedQuest.id));
+      toast.success('Quest deleted successfully!');
+      setShowDeleteModal(false);
     } catch (error) {
       console.error('Failed to delete quest:', error);
-      setError('Failed to delete quest. Please try again later.');  // Mensagem de erro
+      toast.error('Failed to delete quest. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditQuest = (quest: Quest) => {
+    setEditQuestData(quest);  // Carrega os dados da quest no estado de edição
+    setShowEditModal(true);    // Abre o modal de edição
+  };
+
+  const handleSaveChanges = async () => {
+    if (!editQuestData) return;
+    setLoading(true);
+    try {
+      const response = await api.put(`/quests/${editQuestData.id}`, editQuestData);
+      setQuests((prevQuests) =>
+        prevQuests.map((quest) => (quest.id === editQuestData.id ? response.data : quest))
+      );
+      toast.success('Quest updated successfully!');
+      setShowEditModal(false);
+    } catch (error) {
+      console.error('Failed to update quest:', error);
+      toast.error('Failed to update quest. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -141,9 +162,15 @@ export default function Dashboard() {
                     <QuestCard
                       key={quest.id}
                       quest={quest}
-                      onComplete={handleCompleteQuest}
-                      onEdit={handleEditQuest}
-                      onDelete={handleDeleteQuest}
+                      onComplete={() => {
+                        setSelectedQuest(quest);
+                        setShowCompleteModal(true);
+                      }}
+                      onEdit={() => handleEditQuest(quest)}  // Abre o modal de edição
+                      onDelete={() => {
+                        setSelectedQuest(quest);
+                        setShowDeleteModal(true);
+                      }}
                     />
                   ))}
                   {quests.length === 0 && (
@@ -167,6 +194,108 @@ export default function Dashboard() {
         </div>
       </div>
       <FriendsList />
+
+      {/* Modal de confirmação para completar a quest */}
+      <Dialog open={showCompleteModal} onClose={() => setShowCompleteModal(false)}>
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h3 className="text-lg font-semibold">Complete Quest</h3>
+            <p>Are you sure you want to complete this quest?</p>
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={() => setShowCompleteModal(false)}
+                className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg mr-2"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCompleteQuest}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg"
+              >
+                {loading ? <Spinner /> : 'Complete Quest'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Dialog>
+
+      {/* Modal de confirmação para deletar a quest */}
+      <Dialog open={showDeleteModal} onClose={() => setShowDeleteModal(false)}>
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h3 className="text-lg font-semibold">Delete Quest</h3>
+            <p>Are you sure you want to delete this quest?</p>
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg mr-2"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteQuest}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg"
+              >
+                {loading ? <Spinner /> : 'Delete Quest'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Dialog>
+
+      {/* Modal de edição da quest */}
+      <Dialog open={showEditModal} onClose={() => setShowEditModal(false)}>
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg">
+            <h3 className="text-lg font-semibold">Edit Quest</h3>
+            <div className="mt-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Title</label>
+                <input
+                  type="text"
+                  value={editQuestData?.title || ''}
+                  onChange={(e) => setEditQuestData((prev) => ({ ...prev, title: e.target.value }))}
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+              </div>
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <textarea
+                  value={editQuestData?.description || ''}
+                  onChange={(e) => setEditQuestData((prev) => ({ ...prev, description: e.target.value }))}
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+              </div>
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700">Type</label>
+                <select
+                  value={editQuestData?.type || 'DAILY'}
+                  onChange={(e) => setEditQuestData((prev) => ({ ...prev, type: e.target.value as 'DAILY' | 'WEEKLY' | 'MONTHLY' }))}
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option value="DAILY">Daily</option>
+                  <option value="WEEKLY">Weekly</option>
+                  <option value="MONTHLY">Monthly</option>
+                </select>
+              </div>
+              <div className="mt-4 flex justify-end">
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg mr-2"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveChanges}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg"
+                >
+                  {loading ? <Spinner /> : 'Save Changes'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Dialog>
     </Layout>
   );
 }

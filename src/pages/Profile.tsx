@@ -42,6 +42,8 @@ export default function Profile() {
   const [tempProfilePicture, setTempProfilePicture] = useState<File | null>(null);
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false); // Novo estado para controlar o carregamento
+
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -66,52 +68,45 @@ export default function Profile() {
     }
   };
 
-  // Salva a nova foto de perfil
   const handleSavePhoto = async () => {
-    if (tempProfilePicture) {
-      const formData = new FormData();
-      formData.append('profilePicture', tempProfilePicture);
+    if (!tempProfilePicture) return;
   
-      try {
-        const response = await api.post('/user/update', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-          },
-        });
+    setLoading(true); // Inicia o carregamento
+    const formData = new FormData();
+    formData.append('profilePicture', tempProfilePicture);
   
-        if (response.data) {
-          const formattedProfilePicture = response.data.profilePicture.replace(/\\/g, '/'); // Corrige as barras invertidas
+    try {
+      const response = await api.post('/user/update', formData, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+        },
+      });
   
-          // Atualiza o estado com o novo caminho da foto
-          setProfileData((prev) => ({
-            ...prev,
-            profilePicture: formattedProfilePicture,
-          }));
+      if (response.data) {
+        const formattedProfilePicture = response.data.profilePicture.replace(/\\/g, '/'); // Corrige as barras invertidas
+        setProfileData((prev) => ({
+          ...prev,
+          profilePicture: formattedProfilePicture,
+        }));
   
-          // Atualiza o estado global com a foto corrigida (se necessário)
-          setUser((prevUser) => ({
-            ...prevUser,
-            profilePicture: formattedProfilePicture,
-          }));
+        setUser((prevUser) => ({
+          ...prevUser,
+          profilePicture: formattedProfilePicture,
+        }));
   
-          // Atualiza o localStorage com os dados do usuário
-          localStorage.setItem('user', JSON.stringify(response.data));
+        // Atualiza o localStorage com os dados atualizados
+        localStorage.setItem('user', JSON.stringify(response.data));
   
-          // Limpa o estado temporário da imagem e fecha o modal
-          setTempProfilePicture(null);
-          setModalOpen(false);
-  
-          toast.success('Foto de perfil atualizada com sucesso!');
-        }
-      } catch (err) {
-        console.error(err);
-        setError('Falha ao atualizar a foto de perfil.');
-        toast.error('Falha ao atualizar a foto de perfil.');
+        toast.success('Foto de perfil atualizada com sucesso!');
       }
+    } catch (err) {
+      console.error(err);
+      setError('Falha ao atualizar a foto de perfil.');
+      toast.error('Falha ao atualizar a foto de perfil.');
+    } finally {
+      setLoading(false); // Finaliza o carregamento
     }
   };
-  
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
