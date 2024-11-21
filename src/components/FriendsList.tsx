@@ -6,7 +6,7 @@ interface Friend {
   id: string;
   username: string;
   name: string;
-  avatar?: string;
+  profilePicture?: string;
   level: number;
   title?: string;
 }
@@ -53,10 +53,10 @@ const FriendListItem = ({ friend, onRemove }: { friend: Friend; onRemove: () => 
   <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
     <div className="flex items-center space-x-2">
       <img
-        src={friend.avatar || `https://ui-avatars.com/api/?name=${friend.name}`}
+        src={friend.profilePicture || 'https://ui-avatars.com/api/?name=' + user?.name}
         alt={friend.name}
-        className="w-8 h-8 rounded-full"
-      />
+        className="w-8 h-8 rounded-full shadow-lg object-cover transform transition-transform duration-300 hover:scale-105 border-2 border-white" 
+        />
       <div>
         <div>{friend.name}</div>
         {friend.title && (

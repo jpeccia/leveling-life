@@ -47,6 +47,7 @@ export default function Dashboard() {
   useEffect(() => {
     loadQuests();
     loadProfile();
+    fetchUser();
   }, []);
 
   const loadQuests = async () => {

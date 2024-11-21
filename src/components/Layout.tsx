@@ -47,8 +47,8 @@ export function Layout({ children }: LayoutProps) {
           <img
             src={user?.profilePicture || 'https://ui-avatars.com/api/?name=' + user?.name}
             alt={user?.name}
-            className="w-16 h-16 rounded-full mb-2"
-          />
+            className="w-28 h-28 rounded-full shadow-lg object-cover transform transition-transform duration-300 hover:scale-105 border-2 border-white" 
+            />
           <p className="font-medium text-sm">{user?.name}</p>
           <p className="text-xs text-gray-500 mb-2">{user?.title}</p> {/* Título abaixo do nome */}
           

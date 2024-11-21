@@ -30,6 +30,7 @@ export default function Profile() {
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
     email: user?.email || '',
+    level: user?.level || 1,
     newEmail: '',
     currentPassword: '',
     profilePicture: user?.profilePicture || '',
@@ -39,19 +40,18 @@ export default function Profile() {
     newPassword: '',
     confirmPassword: '',
   });
-  const [tempProfilePicture, setTempProfilePicture] = useState<File | null>(null);
+  const [tempProfilePicture, setTempProfilePicture] = useState<string | null>(null);  // Mudado para string
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
-  const [loading, setLoading] = useState(false); // Novo estado para controlar o carregamento
+  const [loading, setLoading] = useState(false);
   const { fetchUser } = useAuthStore();
-
-
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
-      setUser(parsedUser); // Atualiza o estado global com os dados armazenados
+      setUser(parsedUser);
+      fetchUser();
     }
   }, [setUser]);
 
@@ -61,63 +61,111 @@ export default function Profile() {
 
   const nextLevelXp = calculateXpForNextLevel(user?.level || 1);
 
+  // Função para tratar a mudança da URL da imagem
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setTempProfilePicture(file);
+    const url = e.target.value;
+    setTempProfilePicture(url);
+  };
+
+  const isImageUrl = (url) => {
+    const imageExtensions = /\.(jpg|jpeg|png|gif|bmp|webp)$/i;
+    return imageExtensions.test(url);
+  };
+
+  const isValidUrl = (url) => {
+    try {
+      new URL(url); // Tenta criar um objeto URL. Se falhar, não é uma URL válida.
+      return true;
+    } catch (err) {
+      return false;
+    }
+  };
+
+  const isImageAccessible = async (url) => {
+    try {
+      const response = await fetch(url, { method: 'HEAD' });
+      if (response.ok && response.headers.get('Content-Type').includes('image')) {
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Erro ao acessar a imagem:', error);
+      return false;
     }
   };
 
   const handleSavePhoto = async () => {
+
+      // Obter o nível do usuário (supondo que você tenha essa informação disponível em algum lugar)
+    const userLevel = profileData.level;  // Substitua com a maneira que você armazena o nível do usuário.
     if (!tempProfilePicture) return;
   
-    setLoading(true); // Inicia o carregamento
-    const formData = new FormData();
-    formData.append('profilePicture', tempProfilePicture);
+    // Verificar se a URL é válida
+    if (!isValidUrl(tempProfilePicture)) {
+      toast.error('A URL da foto de perfil não é válida.');
+      return;
+    }
   
+    // Verificar se a URL é de uma imagem
+    if (!isImageUrl(tempProfilePicture)) {
+      toast.error('A URL não é de uma imagem válida.');
+      return;
+    }
+
+      // Permitir GIFs somente após o nível 50
+  if (tempProfilePicture.endsWith('.gif') && userLevel < 50) {
+    toast.error('Você precisa estar no nível 50 ou superior para usar GIFs como foto de perfil.');
+    return;
+  }
+  
+    // Verificar se a imagem está acessível
+    const imageAccessible = await isImageAccessible(tempProfilePicture);
+    if (!imageAccessible) {
+      toast.error('A imagem não pôde ser carregada.');
+      return;
+    }
+  
+    setLoading(true);
     try {
-      const response = await api.post('/user/update', formData, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
-        },
-      });
+      const response = await api.post('/user/update', 
+        { profilePicture: tempProfilePicture },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+          },
+        }
+      );
   
-      if (response.data && response.data.profilePicture) {
-        const formattedProfilePicture = response.data.profilePicture.replace(/\\/g, '/'); // Corrige as barras invertidas
-        setProfileData((prev) => ({
-          ...prev,
-          profilePicture: formattedProfilePicture,
-        }));
-        await fetchUser(); // Recarrega os dados do usuário
+      console.log('Resposta da API:', response.data);
   
-        toast.success('Foto de perfil atualizada com sucesso!');
-      } else {
-        toast.error('Erro ao atualizar a foto de perfil. A resposta não contém a foto.');
-      }
+      setProfileData((prev) => ({
+        ...prev,
+        profilePicture: response.data.profilePicture,
+      }));
+      await fetchUser(); // Recarrega os dados do usuário
+      toast.success('Foto de perfil atualizada com sucesso!');
     } catch (err) {
-      console.error(err);
+      console.error('Erro na requisição:', err);
       setError('Falha ao atualizar a foto de perfil.');
       toast.error('Falha ao atualizar a foto de perfil.');
     } finally {
-      setLoading(false); // Finaliza o carregamento
+      setLoading(false);
     }
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-  
+
     const token = localStorage.getItem('authToken');
-  
+
     if (!token) {
-      setError('Token de autenticação não encontrado.');
+      setError('Authentication token not found.');
       return;
     }
-  
-    // Verifica se a senha atual é fornecida para a atualização
+
     if (profileData.currentPassword) {
       try {
-        // Valida se a senha atual está correta (requisição ao backend)
         const passwordCheckResponse = await api.post(
           '/user/check-password',
           { currentPassword: profileData.currentPassword },
@@ -127,67 +175,62 @@ export default function Profile() {
             },
           }
         );
-  
+
         if (passwordCheckResponse.status !== 200) {
-          setError('Senha atual incorreta.');
+          setError('Incorrect current password');
           return;
         }
       } catch (err) {
-        setError('Erro ao verificar a senha atual.');
+        setError('Error checking current password');
         console.error('Erro ao verificar a senha atual:', err);
         return;
       }
     }
-  
+
     const updatedData: any = {
       name: profileData.name,
       currentPassword: profileData.currentPassword,
     };
-  
+
     if (profileData.newEmail && profileData.newEmail.trim() !== "") {
       updatedData.newEmail = profileData.newEmail;
     }
-  
+
     try {
-      const response = await api.post(
-        '/user/update',
-        updatedData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-  
+      const response = await api.post('/user/update', updatedData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
       if (response.status === 200) {
         const { fetchUser } = useAuthStore.getState();
         await fetchUser();
-        setEditMode(null); // Sai do modo de edição
-        toast.success('Perfil atualizado com sucesso!');
+        setEditMode(null);
+        toast.success('Profile updated successfully!');
       } else {
-        setError(`Erro ao atualizar perfil: ${response.data.message || 'Desconhecido'}`);
+        setError(`Error updating profile: ${response.data.message || 'Desconhecido'}`);
       }
     } catch (err: any) {
-      console.error('Erro ao atualizar perfil:', err);
-      setError(err.response?.data?.message || 'Falha ao atualizar o perfil.');
+      console.error('Error updating profile:', err);
+      setError(err.response?.data?.message || 'Failed to update profile');
     }
   };
-  
+
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setError('As senhas não coincidem');
+      setError('Passwords do not match');
       return;
     }
-  
+
     if (!passwordData.currentPassword) {
-      setError('Senha atual é obrigatória.');
+      setError('Current password is required');
       return;
     }
-  
+
     try {
-      // Verifica a senha atual antes de atualizar a senha
       const passwordCheckResponse = await api.post(
         '/user/check-password',
         { currentPassword: passwordData.currentPassword },
@@ -197,18 +240,17 @@ export default function Profile() {
           },
         }
       );
-  
+
       if (passwordCheckResponse.status !== 200) {
-        setError('Senha atual incorreta.');
+        setError('Incorrect current password');
         return;
       }
-  
-      // Se a senha atual estiver correta, então atualiza a nova senha
+
       await api.post('/user/update', {
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword,
       });
-  
+
       setEditMode(null);
       setError('');
       setPasswordData({
@@ -216,9 +258,9 @@ export default function Profile() {
         newPassword: '',
         confirmPassword: '',
       });
-      toast.success("Senha alterada com sucesso!");
+      toast.success("Password changed successfully!");
     } catch (err) {
-      setError('Falha ao atualizar a senha');
+      setError('Failed to update password');
       console.error(err);
     }
   };
@@ -230,10 +272,10 @@ export default function Profile() {
           <div className="flex flex-col items-center mb-8">
             <div className="relative group">
               <img
-              src={user?.profilePicture ? `http://localhost:8080/${user.profilePicture}` : `https://ui-avatars.com/api/?name=${user?.name}`}
-              alt={user?.name}
-                className="w-32 h-32 rounded-full shadow-lg"
-              />
+                src={user?.profilePicture ? user.profilePicture : `https://ui-avatars.com/api/?name=${user?.name}`}
+                alt={user?.name}
+                className="w-52 h-48 rounded-full shadow-lg object-cover transform transition-transform duration-300 hover:scale-105 border-2 border-white" 
+                />
               <button
                 onClick={() => setModalOpen(true)}
                 className="absolute bottom-2 right-2 bg-gray-800 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
@@ -247,9 +289,6 @@ export default function Profile() {
               <span className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm">
                 Level {user?.level}
               </span>
-              <div className="mt-2 flex items-center justify-center space-x-2">
-                <span className="text-gray-500">{user?.title}</span>
-              </div>
             </div>
           </div>
 
@@ -267,126 +306,89 @@ export default function Profile() {
             {editMode === null ? (
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">
-                    Email
-                  </label>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
                   <p className="text-gray-900">{user?.email}</p>
                 </div>
 
                 <div className="flex space-x-4">
-                  <Button
-                    onClick={() => setEditMode('profile')}
-                    className="flex items-center justify-center space-x-2"
-                  >
+                  <Button onClick={() => setEditMode('profile')} className="flex items-center justify-center space-x-2">
                     <Edit2 className="h-4 w-4" />
-                    <span>Edit Profile</span>
+                    <span>Update Profile</span>
                   </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={() => setEditMode('password')}
-                    className="flex items-center justify-center space-x-2"
-                  >
+                  <Button onClick={() => setEditMode('password')} className="flex items-center justify-center space-x-2">
                     <Key className="h-4 w-4" />
                     <span>Change Password</span>
                   </Button>
                 </div>
               </div>
-            ) : editMode === 'profile' ? (
-              <form onSubmit={handleUpdateProfile} className="space-y-6">
-                {error && (
-                  <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm">
-                    {error}
-                  </div>
-                )}
-
-                <Input
-                  label="Name"
-                  type="text"
-                  value={profileData.name}
-                  onChange={(e) =>
-                    setProfileData({ ...profileData, name: e.target.value })
-                  }
-                />
-
-                <Input
-                  label="New Email"
-                  type="newEmail"
-                  value={profileData.newEmail}
-                  onChange={(e) =>
-                    setProfileData({ ...profileData, newEmail: e.target.value })
-                  }
-                />
-
-                <Input
-                  label="Current Password"
-                  type="password"
-                  value={profileData.currentPassword}
-                  onChange={(e) =>
-                    setProfileData({ ...profileData, currentPassword: e.target.value })
-                  }
-                  required
-                />
-
-                <div className="flex space-x-4">
-                  <Button type="submit">Save Changes</Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => setEditMode(null)}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </form>
             ) : (
-              <form onSubmit={handleUpdatePassword} className="space-y-6">
-                {error && (
-                  <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm">
-                    {error}
-                  </div>
+              <div>
+                {editMode === 'profile' ? (
+                  <form onSubmit={handleUpdateProfile}>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-600 mb-1">Name</label>
+                      <Input
+                          type="text"
+                          name="name"
+                          value={profileData.name}
+                          onChange={(e) => setProfileData({ ...profileData, name: e.target.value })} label={''}                      />
+                    </div>
+
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-600 mb-1">New Email</label>
+                      <Input
+                          type="email"
+                          name="newEmail"
+                          value={profileData.newEmail}
+                          onChange={(e) => setProfileData({ ...profileData, newEmail: e.target.value })} label={''}                      />
+                    </div>
+
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-600 mb-1">Current Password</label>
+                      <Input
+                          type="password"
+                          name="currentPassword"
+                          value={profileData.currentPassword}
+                          onChange={(e) => setProfileData({ ...profileData, currentPassword: e.target.value })} label={''}                      />
+                    </div>
+
+                    <Button type="submit" disabled={loading}>Save Changes</Button>
+                    {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
+                  </form>
+                ) : (
+                  <form onSubmit={handleUpdatePassword}>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-600 mb-1">Current Password</label>
+                      <Input
+                            type="password"
+                            name="currentPassword"
+                            value={passwordData.currentPassword}
+                            onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })} label={''}                      />
+                    </div>
+
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-600 mb-1">New Password</label>
+                      <Input
+                            type="password"
+                            name="newPassword"
+                            value={passwordData.newPassword}
+                            onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })} label={''}                      />
+                    </div>
+
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-600 mb-1">Confirm Password</label>
+                      <Input
+                            type="password"
+                            name="confirmPassword"
+                            value={passwordData.confirmPassword}
+                            onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })} label={''}                      />
+                    </div>
+
+                    <Button type="submit" disabled={loading}>Change Password</Button>
+                    {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
+                  </form>
                 )}
-
-                <Input
-                  label="Current Password"
-                  type="password"
-                  value={passwordData.currentPassword}
-                  onChange={(e) =>
-                    setPasswordData({ ...passwordData, currentPassword: e.target.value })
-                  }
-                  required
-                />
-
-                <Input
-                  label="New Password"
-                  type="password"
-                  value={passwordData.newPassword}
-                  onChange={(e) =>
-                    setPasswordData({ ...passwordData, newPassword: e.target.value })
-                  }
-                  required
-                />
-
-                <Input
-                  label="Confirm New Password"
-                  type="password"
-                  value={passwordData.confirmPassword}
-                  onChange={(e) =>
-                    setPasswordData({ ...passwordData, confirmPassword: e.target.value })
-                  }
-                  required
-                />
-
-                <div className="flex space-x-4">
-                  <Button type="submit">Save Changes</Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => setEditMode(null)}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </form>
+              </div>
             )}
           </div>
         </div>
@@ -394,29 +396,23 @@ export default function Profile() {
 
       {/* Modal de foto de perfil */}
       {modalOpen && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg max-w-sm w-full">
-            <h2 className="text-lg font-semibold mb-4">Change Profile Picture</h2>
-            <input
-              type="file"
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+            <h2 className="text-lg font-semibold mb-4">Update Profile Picture</h2>
+            <Input
+              type="text"
+              value={tempProfilePicture || ''}
               onChange={handlePhotoChange}
-              accept="image/*"
-              className="mb-4"
-            />
+              placeholder="Enter image URL"
+              className="mb-4" label={''}            />
             {tempProfilePicture && (
               <div className="mb-4">
-                <img
-                  src={URL.createObjectURL(tempProfilePicture)}
-                  alt="Preview"
-                  className="w-32 h-32 rounded-full"
-                />
+                <img src={tempProfilePicture} alt="Preview" className="w-32 h-32 object-cover rounded-lg" />
               </div>
             )}
             <div className="flex space-x-4">
-              <Button onClick={handleSavePhoto}>Save</Button>
-              <Button variant="secondary" onClick={() => setModalOpen(false)}>
-                Cancel
-              </Button>
+              <Button onClick={handleSavePhoto} disabled={loading}>Save</Button>
+              <Button onClick={() => setModalOpen(false)} className="bg-gray-300">Cancel</Button>
             </div>
           </div>
         </div>

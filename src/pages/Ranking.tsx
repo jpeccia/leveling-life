@@ -3,6 +3,7 @@ import { Layout } from '../components/Layout';
 import { Trophy, Medal, User } from 'lucide-react';
 import { ExperienceBar } from '../components/ExperienceBar';
 import api from '../lib/axios';
+import { useAuthStore } from '../store/authStore';
 
 interface RankedUser {
   id: string;
@@ -11,7 +12,7 @@ interface RankedUser {
   level: number;
   xp: number;
   title: string;
-  avatar?: string;
+  profilePicture: string;
 }
 
 const calculateXpForNextLevel = (level: number) => {
@@ -21,9 +22,11 @@ const calculateXpForNextLevel = (level: number) => {
 export default function Ranking() {
   const [users, setUsers] = useState<RankedUser[]>([]);
   const [selectedUser, setSelectedUser] = useState<RankedUser | null>(null);
+  const { fetchUser } = useAuthStore();
 
   useEffect(() => {
     loadRanking();
+    fetchUser();
   }, []);
 
   const nextLevelXp = calculateXpForNextLevel(selectedUser?.level || 1)
@@ -80,9 +83,10 @@ export default function Ranking() {
                     )}
                   </div>
                   <img
-                    src={user.avatar || `https://ui-avatars.com/api/?name=${user.name}`}
-                    alt={user.name}
-                    className="w-10 h-10 rounded-full"
+                src={user?.profilePicture ? user.profilePicture : `https://ui-avatars.com/api/?name=${user?.name}`}
+                alt={user.name}
+                className="w-12 h-12 rounded-full shadow-lg object-cover transform transition-transform duration-300 hover:scale-105 border-2 border-white" 
+
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
@@ -104,13 +108,10 @@ export default function Ranking() {
               <div className="bg-gray-50 p-6 rounded-lg">
                 <div className="flex flex-col items-center text-center">
                   <img
-                    src={
-                      selectedUser.avatar ||
-                      `https://ui-avatars.com/api/?name=${selectedUser.name}`
-                    }
+                    src={selectedUser?.profilePicture ? selectedUser.profilePicture : `https://ui-avatars.com/api/?name=${selectedUser?.name}`}
                     alt={selectedUser.name}
-                    className="w-24 h-24 rounded-full mb-4"
-                  />
+                    className="w-24 h-24 rounded-full shadow-lg object-cover transform transition-transform duration-300 hover:scale-105 border-2 border-white" 
+                    />
                   <h2 className="text-xl font-bold text-gray-900">
                     {selectedUser.name}
                   </h2>
