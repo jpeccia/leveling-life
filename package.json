@@ -12,6 +12,11 @@
   "dependencies": {
     "@headlessui/react": "^2.2.0",
     "@tanstack/react-table": "^8.20.5",
+    "@tiptap/extension-highlight": "^2.10.1",
+    "@tiptap/extension-placeholder": "^2.10.1",
+    "@tiptap/pm": "^2.10.1",
+    "@tiptap/react": "^2.10.1",
+    "@tiptap/starter-kit": "^2.10.1",
     "axios": "^1.6.7",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
@@ -19,7 +24,9 @@
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.22.3",
     "sonner": "^1.7.0",
+    "tiptap": "^0.15.0",
     "vite-react-typescript-starter": "file:",
+    "xlsx": "^0.18.5",
     "zustand": "^4.5.2"
   },
   "devDependencies": {

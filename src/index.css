@@ -21,3 +21,68 @@
     border-radius: 2px;
   }
 }
+
+.prose {
+  max-width: none;
+}
+
+.prose p {
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+.prose h1 {
+  font-size: 2em;
+  margin-top: 0;
+  margin-bottom: 0.8em;
+  font-weight: 600;
+}
+
+.prose h2 {
+  font-size: 1.5em;
+  margin-top: 1.6em;
+  margin-bottom: 0.8em;
+  font-weight: 600;
+}
+
+.prose h3 {
+  font-size: 1.25em;
+  margin-top: 1.6em;
+  margin-bottom: 0.6em;
+  font-weight: 600;
+}
+
+.prose ul,
+.prose ol {
+  margin-top: 1em;
+  margin-bottom: 1em;
+  padding-left: 1.5em;
+}
+
+.prose li {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.prose blockquote {
+  margin-top: 1.6em;
+  margin-bottom: 1.6em;
+  padding-left: 1em;
+  border-left: 4px solid #E5E7EB;
+  color: #6B7280;
+}
+
+.prose strong {
+  font-weight: 600;
+  color: inherit;
+}
+
+.prose em {
+  font-style: italic;
+}
+
+.ProseMirror {
+  min-height: 100px;
+  padding: 0.5em;
+  outline: none;
+}

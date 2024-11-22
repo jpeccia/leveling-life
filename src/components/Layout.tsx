@@ -10,6 +10,7 @@ import {
   PlusSquare,
   Menu,
   FileSpreadsheet,
+  FileText,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { ExperienceBar } from './ExperienceBar';
@@ -40,6 +41,7 @@ export function Layout({ children }: LayoutProps) {
     { icon: Calendar, label: 'Calendar', path: '/calendar' },
     { icon: FileSpreadsheet, label: 'Spreadsheet', path: '/spreadsheet' },
     { icon: Trophy, label: 'Ranking', path: '/ranking' },
+    { icon: FileText, label: 'Notes', path: '/notes' },
     { icon: Info, label: 'About', path: '/about' },
   ];
 

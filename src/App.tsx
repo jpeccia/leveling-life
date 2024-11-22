@@ -7,6 +7,7 @@ import Profile from './pages/Profile';
 import QuestCreation from './pages/QuestCreation';
 import Calendar from './pages/Calendar';
 import Ranking from './pages/Ranking';
+import Notes from './pages/Notes'
 import About from './pages/About';
 import Spreadsheet from './pages/Spreadsheet';
 import { useEffect } from 'react';
@@ -127,6 +128,14 @@ function App() {
           element={
             <PrivateRoute>
               <Ranking />
+            </PrivateRoute>
+          }
+        />
+          <Route
+          path="/notes"
+          element={
+            <PrivateRoute>
+              <Notes />
             </PrivateRoute>
           }
         />
