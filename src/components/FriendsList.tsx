@@ -16,7 +16,7 @@ interface FriendRequest {
   sender: {
     username: string;
     name: string;
-    avatar?: string;
+    profilePicture?: string;
   };
 }
 
@@ -32,7 +32,7 @@ const FriendRequestItem = ({
   <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
     <div className="flex items-center space-x-2">
       <img
-        src={request.sender.avatar || `https://ui-avatars.com/api/?name=${request.sender.name}`}
+        src={request.sender.profilePicture || `https://ui-avatars.com/api/?name=${request.sender.name}`}
         alt={request.sender.name}
         className="w-8 h-8 rounded-full"
       />

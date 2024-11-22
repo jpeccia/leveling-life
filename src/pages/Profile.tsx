@@ -81,6 +81,7 @@ export default function Profile() {
     }
   };
 
+
   const handleSavePhoto = async () => {
 
     // Obter o nível do usuário (supondo que você tenha essa informação disponível em algum lugar)

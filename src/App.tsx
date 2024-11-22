@@ -7,6 +7,7 @@ import Profile from './pages/Profile';
 import QuestCreation from './pages/QuestCreation';
 import Calendar from './pages/Calendar';
 import Ranking from './pages/Ranking';
+import About from './pages/About';
 import { useEffect } from 'react';
 
 // Componente para rotas privadas
@@ -117,6 +118,14 @@ function App() {
           element={
             <PrivateRoute>
               <Ranking />
+            </PrivateRoute>
+          }
+        />
+          <Route
+          path="/about"
+          element={
+            <PrivateRoute>
+              <About />
             </PrivateRoute>
           }
         />
