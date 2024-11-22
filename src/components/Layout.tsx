@@ -9,6 +9,7 @@ import {
   LogOut,
   PlusSquare,
   Menu,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { ExperienceBar } from './ExperienceBar';
@@ -37,6 +38,7 @@ export function Layout({ children }: LayoutProps) {
     { icon: User, label: 'Profile', path: '/profile' },
     { icon: PlusSquare, label: 'Create Quest', path: '/quests/create' },
     { icon: Calendar, label: 'Calendar', path: '/calendar' },
+    { icon: FileSpreadsheet, label: 'Spreadsheet', path: '/spreadsheet' },
     { icon: Trophy, label: 'Ranking', path: '/ranking' },
     { icon: Info, label: 'About', path: '/about' },
   ];
