@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Layout } from '../components/Layout';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -17,6 +17,7 @@ import {
   Trash2,
   Search,
 } from 'lucide-react';
+import api from '../lib/axios';
 
 interface Note {
   id: string;
@@ -30,6 +31,7 @@ export default function Notes() {
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Editor setup
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -46,50 +48,108 @@ export default function Notes() {
           content: editor.getHTML(),
           updatedAt: new Date(),
         };
-        updateNote(updatedNote);
+        if (updatedNote.content !== selectedNote.content) {
+          updateNote(updatedNote);
+        }
       }
     },
   });
 
-  const createNote = () => {
-    const newNote: Note = {
-      id: Date.now().toString(),
+  // Função para buscar as notas
+  useEffect(() => {
+    async function fetchNotes() {
+      try {
+        const response = await api.get('/notes');
+        setNotes(response.data);
+      } catch (error) {
+        console.error('Failed to fetch notes', error);
+      }
+    }
+    fetchNotes();
+  }, []); // Executa apenas uma vez após a montagem do componente
+
+  // Criar uma nova nota
+  const createNote = async () => {
+    const token = localStorage.getItem('token'); // Supondo que o token esteja no localStorage
+    const newNote: Omit<Note, 'id' | 'updatedAt'> = {
       title: 'Untitled Note',
       content: '',
-      updatedAt: new Date(),
     };
-    setNotes([newNote, ...notes]);
-    setSelectedNote(newNote);
-    editor?.commands.setContent('');
-  };
-
-  const updateNote = (updatedNote: Note) => {
-    setNotes(notes.map((note) => 
-      note.id === updatedNote.id ? updatedNote : note
-    ));
-    setSelectedNote(updatedNote);
-  };
-
-  const deleteNote = (noteId: string) => {
-    setNotes(notes.filter((note) => note.id !== noteId));
-    if (selectedNote?.id === noteId) {
-      setSelectedNote(null);
+  
+    try {
+      const response = await api.post('/notes', newNote, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setNotes([response.data, ...notes]);
+      setSelectedNote(response.data);
       editor?.commands.setContent('');
+    } catch (error) {
+      console.error('Failed to create note', error);
+      if (error.response?.status === 403) {
+        alert('Você não tem permissão para criar notas.');
+      } else {
+        alert('Ocorreu um erro na criação da nota.');
+      }
     }
   };
 
-  const filteredNotes = notes.filter((note) =>
-    note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    note.content.toLowerCase().includes(searchQuery.toLowerCase())
+  // Atualizar uma nota existente
+  const updateNote = async (updatedNote: Note) => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await api.put(`/notes/${updatedNote.id}`, updatedNote, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setNotes(notes.map((note) => (note.id === updatedNote.id ? response.data : note)));
+      setSelectedNote(response.data);
+    } catch (error) {
+      console.error('Failed to update note', error);
+      alert('Erro ao atualizar a nota.');
+    }
+  };
+
+  // Deletar uma nota
+  const deleteNote = async (noteId: string) => {
+    const token = localStorage.getItem('token');
+    try {
+      await api.delete(`/notes/${noteId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setNotes(notes.filter((note) => note.id !== noteId));
+      if (selectedNote?.id === noteId) {
+        setSelectedNote(null);
+        editor?.commands.setContent('');
+      }
+    } catch (error) {
+      console.error('Failed to delete note', error);
+      alert('Erro ao deletar a nota.');
+    }
+  };
+
+  // Filtrar notas pela pesquisa
+  const filteredNotes = notes.filter(
+    (note) =>
+      note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      note.content.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
+  const formatDate = (date: any) => {
+    const validDate = new Date(date);
+    if (isNaN(validDate.getTime())) {
+      return 'Invalid date';
+    }
+    return new Intl.DateTimeFormat('pt-BR', {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-    }).format(date);
+    }).format(validDate);
   };
 
   return (
@@ -201,7 +261,9 @@ export default function Notes() {
                         <Italic className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => editor?.chain().focus().toggleBulletList().run()}
+                        onClick={() =>
+                          editor?.chain().focus().toggleBulletList().run()
+                        }
                         className={`p-1.5 rounded ${
                           editor?.isActive('bulletList')
                             ? 'bg-gray-100 text-gray-900'
@@ -211,7 +273,9 @@ export default function Notes() {
                         <List className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => editor?.chain().focus().toggleOrderedList().run()}
+                        onClick={() =>
+                          editor?.chain().focus().toggleOrderedList().run()
+                        }
                         className={`p-1.5 rounded ${
                           editor?.isActive('orderedList')
                             ? 'bg-gray-100 text-gray-900'
@@ -230,31 +294,17 @@ export default function Notes() {
                       >
                         <Quote className="h-4 w-4" />
                       </button>
-                      <div className="flex-1" />
-                      <button
-                        onClick={() => editor?.chain().focus().undo().run()}
-                        className="p-1.5 text-gray-500 hover:bg-gray-100 rounded"
-                      >
-                        <Undo className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => editor?.chain().focus().redo().run()}
-                        className="p-1.5 text-gray-500 hover:bg-gray-100 rounded"
-                      >
-                        <Redo className="h-4 w-4" />
-                      </button>
                     </div>
                   </div>
-                  <div className="flex-1 overflow-y-auto p-4">
-                    <EditorContent editor={editor} className="prose max-w-none" />
+
+                  {/* Editor Content */}
+                  <div className="flex-1 p-4 overflow-y-auto">
+                    <EditorContent editor={editor} />
                   </div>
                 </>
               ) : (
-                <div className="flex-1 flex items-center justify-center text-gray-500">
-                  <div className="text-center">
-                    <FileText className="h-12 w-12 mx-auto mb-4" />
-                    <p>Select a note or create a new one</p>
-                  </div>
+                <div className="flex justify-center items-center h-full">
+                  <p className="text-gray-500">Select or create a note</p>
                 </div>
               )}
             </div>
