@@ -37,8 +37,18 @@ export function MiniCalendar({ onExpand, quests }: MiniCalendarProps) {
   const goToToday = () => setCurrentDate(new Date());
 
   const getDayQuests = (day: number) => {
-    const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toDateString();
-    return quests.filter(quest => new Date(quest.dueDate).toDateString() === targetDate);
+    return quests.filter(quest => {
+      const dueDate = new Date(quest.dueDate);
+      // Garantir que o dueDate tenha apenas a data, sem considerar a hora
+      const formattedDueDate = dueDate.toISOString().split('T')[0];  // Formato YYYY-MM-DD
+  
+      // Cria a data para o dia atual (currentDate) e formata também
+      const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+      const formattedTargetDate = targetDate.toISOString().split('T')[0];  // Formato YYYY-MM-DD
+  
+      // Compara as duas datas formatadas, sem considerar horas ou minutos
+      return formattedDueDate === formattedTargetDate;
+    });
   };
 
   const getQuestTypeConfig = (type: string) => {
@@ -133,9 +143,6 @@ export function MiniCalendar({ onExpand, quests }: MiniCalendarProps) {
           <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg shadow-md animate-float">
             <CalendarIcon className="h-5 w-5 text-white" />
           </div>
-          <h2 className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
-            Quest Timeline
-          </h2>
         </div>
         <div className="flex space-x-4">
           <div className="flex items-center space-x-2">

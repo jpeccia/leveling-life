@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Layout } from '../components/Layout';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Scroll, Shield, Sword, Wand2 } from 'lucide-react';
 import api from '../lib/axios';
+import clsx from 'clsx';
 
 interface Quest {
   id: string;
@@ -68,16 +69,12 @@ export default function Calendar() {
   
   
 
-  const getQuestTypeStyles = (type: string) => {
+  const getQuestTypeConfig = (type: string) => {
     switch (type) {
-      case 'DAILY':
-        return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'WEEKLY':
-        return 'bg-purple-50 text-purple-700 border-purple-200';
-      case 'MONTHLY':
-        return 'bg-amber-50 text-amber-700 border-amber-200';
-      default:
-        return 'bg-gray-50 text-gray-700 border-gray-200';
+      case 'DAILY': return { icon: Sword, color: 'bg-blue-400', label: 'Daily Quest' };
+      case 'WEEKLY': return { icon: Shield, color: 'bg-purple-400', label: 'Weekly Mission' };
+      case 'MONTHLY': return { icon: Wand2, color: 'bg-amber-400', label: 'Epic Quest' };
+      default: return { icon: Scroll, color: 'bg-gray-400', label: 'Quest' };
     }
   };
 
@@ -113,23 +110,36 @@ export default function Calendar() {
             {day}
           </div>
           <div className="mt-8 space-y-1 max-h-[5.5rem] overflow-y-auto scrollbar-thin">
-            {dayQuests.map((quest) => (
-              <div
-                key={quest.id}
-                className={`px-2 py-1 text-xs rounded-md border ${getQuestTypeStyles(quest.type)} ${quest.completed ? 'opacity-50' : ''} truncate`}
-                title={`${quest.title} (${quest.type.toLowerCase()})`}
-              >
-                {quest.title}
-              </div>
-            ))}
+          {dayQuests.map((quest) => {
+                const config = getQuestTypeConfig(quest.type);
+                const Icon = config.icon;
+                return (
+                  <div
+                    key={quest.id}
+                    className={clsx(
+                      "px-2 py-1 text-xs rounded-md border shadow-sm truncate",
+                      quest.completed ? 'opacity-50' : '',
+                      `bg-gradient-to-r from-white to-${config.color}/10`,
+                      `border-${config.color}/20`,
+                      'hover:scale-105 transform transition-transform'
+                    )}
+                    title={`${quest.title} (${config.label})`}
+                  >
+                    <div className="flex items-center space-x-1">
+                      <Icon className={`w-3 h-3 ${config.color} text-white`} />
+                      <span className="line-clamp-1">{quest.title}</span>
+                    </div>
+                  </div>
+                );
+              })}
           </div>
         </div>
       );
     }
 
     return (
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-gray-100">
+  <div className="w-full bg-white rounded-xl shadow-lg overflow-hidden border border-indigo-100">
+    <div className="flex flex-row items-center justify-between p-6 border-b border-indigo-100 bg-gradient-to-r from-indigo-50 to-purple-50">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="p-2 bg-indigo-50 rounded-lg">
@@ -150,18 +160,18 @@ export default function Calendar() {
           </div>
 
           <div className="flex justify-end mt-4 space-x-3">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-              <span className="text-sm text-gray-600">Daily</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-              <span className="text-sm text-gray-600">Weekly</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-              <span className="text-sm text-gray-600">Monthly</span>
-            </div>
+          <div className="flex items-center space-x-2">
+            <Sword className="w-4 h-4 text-blue-400" />
+            <span className="text-xs text-gray-600">Daily</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Shield className="w-4 h-4 text-purple-400" />
+            <span className="text-xs text-gray-600">Weekly</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Wand2 className="w-4 h-4 text-amber-400" />
+            <span className="text-xs text-gray-600">Monthly</span>
+          </div>
           </div>
         </div>
 
