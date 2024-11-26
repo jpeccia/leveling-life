@@ -10,7 +10,7 @@ import {
   PlusSquare,
   Menu,
   FileSpreadsheet,
-  FileText,
+  FileText
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { ExperienceBar } from './ExperienceBar';

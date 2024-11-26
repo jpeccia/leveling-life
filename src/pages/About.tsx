@@ -46,6 +46,14 @@ export default function About() {
       title: 'Calendar Integration',
       description: 'Visualize your quest schedule and plan your achievements with our intuitive calendar.',
     },
+    {
+      title: 'Notes System',
+      description: 'Keep track of important thoughts, reminders, and ideas with an integrated note-taking system.',
+    },
+    {
+      title: 'Spreadsheet Integration',
+      description: 'Organize your tasks and quests in a spreadsheet-like format, allowing for better management and tracking.',
+    },
   ];
 
   return (

@@ -209,7 +209,7 @@ export default function Dashboard() {
 
         {/* Sidebar - Calendar */}
         <div className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden p-6 h-full">
             <MiniCalendar onExpand={() => navigate('/calendar')} quests={quests} />
           </div>
         </div>

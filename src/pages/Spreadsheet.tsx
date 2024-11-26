@@ -5,7 +5,10 @@ import {
   Upload,
   Download,
   Plus,
+  MinusCircle, // Ícone para remover
   AlertCircle,
+  CheckCircle,
+  Loader,
 } from 'lucide-react';
 import { read, utils, writeFile } from 'xlsx';
 import {
@@ -16,13 +19,15 @@ import {
 } from '@tanstack/react-table';
 
 interface SpreadsheetData {
-  [key: string]: string | number;
+  [key: string]: string | number | null;
 }
 
 export default function Spreadsheet() {
   const [data, setData] = useState<SpreadsheetData[]>([]);
   const [columns, setColumns] = useState<any[]>([]);
   const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false); 
+  const [importSuccess, setImportSuccess] = useState<boolean>(false); 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const columnHelper = createColumnHelper<SpreadsheetData>();
 
@@ -30,31 +35,60 @@ export default function Spreadsheet() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    setLoading(true);
+    setImportSuccess(false);
+    setError('');
+
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const workbook = read(e.target?.result, { type: 'binary' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        const jsonData = utils.sheet_to_json<SpreadsheetData>(worksheet);
+
+        const jsonData = utils.sheet_to_json<SpreadsheetData>(worksheet, {
+          header: 1,
+          defval: '',
+        });
 
         if (jsonData.length > 0) {
-          setData(jsonData);
-          const cols = Object.keys(jsonData[0]).map((key) =>
+          const allColumns = new Set<string>();
+
+          jsonData.forEach((row: any) => {
+            Object.keys(row).forEach((col) => {
+              allColumns.add(col);
+            });
+          });
+
+          const cols = Array.from(allColumns).map((key) =>
             columnHelper.accessor(key as any, {
               header: key,
               cell: (info) => info.getValue(),
             })
           );
+
           setColumns(cols);
-          setError('');
+
+          const updatedData = jsonData.map((row: any) => {
+            const filledRow: SpreadsheetData = {};
+            allColumns.forEach((col) => {
+              filledRow[col] = row[col] || null;
+            });
+            return filledRow;
+          });
+
+          setData(updatedData);
+          setImportSuccess(true);
         }
       } catch (err) {
         setError('Error reading spreadsheet. Please check the file format.');
+      } finally {
+        setLoading(false);
       }
     };
     reader.onerror = () => {
       setError('Error reading file');
+      setLoading(false);
     };
     reader.readAsBinaryString(file);
   };
@@ -84,17 +118,61 @@ export default function Spreadsheet() {
   };
 
   const addColumn = () => {
-    const columnName = `Column${columns.length + 1}`;
+    const columnName = `${columns.length}`;
     const newColumn = columnHelper.accessor(columnName as any, {
       header: columnName,
       cell: (info) => info.getValue(),
     });
     setColumns([...columns, newColumn]);
-    
-    const updatedData = data.map(row => ({
+
+    const updatedData = data.map((row) => ({
       ...row,
-      [columnName]: ''
+      [columnName]: '',
     }));
+    setData(updatedData);
+  };
+
+  // Remover linha específica
+  const removeRow = (index: number) => {
+    if (index < 0 || index >= data.length) {
+      setError('Invalid row index');
+      return;
+    }
+    const updatedData = data.filter((_, rowIndex) => rowIndex !== index);
+    setData(updatedData);
+  };
+
+  // Remover coluna específica
+  const removeColumn = (columnName: string) => {
+    // Verificar se a coluna existe
+    const columnExists = columns.some((col) => col.header === columnName);
+    
+    if (!columnExists) {
+      setError('Column not found');
+      return;
+    }
+  
+    // Remover a coluna
+    const updatedColumns = columns.filter((col) => col.header !== columnName);
+    setColumns(updatedColumns);
+  
+    // Remover a coluna dos dados
+    const updatedData = data.map((row) => {
+      const newRow = { ...row };
+      delete newRow[columnName]; // Remover a chave correspondente à coluna
+      return newRow;
+    });
+  
+    setData(updatedData);
+  };
+
+  const handleCellChange = (
+    rowIndex: number,
+    columnName: string,
+    value: string | number
+  ) => {
+    const updatedData = [...data];
+    updatedData[rowIndex][columnName] = value;
     setData(updatedData);
   };
 
@@ -158,61 +236,89 @@ export default function Spreadsheet() {
                 <span>Add Column</span>
               </button>
             </div>
+          </div>
 
+          {/* Table */}
+          <div className="overflow-auto p-6" style={{ maxHeight: '60vh', maxWidth: '100%' }}>
             {error && (
-              <div className="mt-4 p-3 bg-red-50 text-red-600 rounded-lg flex items-center space-x-2">
+              <div className="flex items-center space-x-2 bg-red-100 p-3 rounded-lg text-red-700 mb-4">
                 <AlertCircle className="h-5 w-5" />
                 <span>{error}</span>
               </div>
             )}
-          </div>
-
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <th
-                        key={header.id}
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                      </th>
+            {importSuccess && (
+              <div className="flex items-center space-x-2 bg-green-100 p-3 rounded-lg text-green-700 mb-4">
+                <CheckCircle className="h-5 w-5" />
+                <span>File imported successfully!</span>
+              </div>
+            )}
+            {loading && (
+              <div className="flex justify-center items-center py-6">
+                <Loader className="h-6 w-6 text-indigo-600 animate-spin" />
+              </div>
+            )}
+            {!loading && data.length > 0 && (
+              <div className="table-wrapper">
+                <table className="min-w-full border-collapse border border-gray-200">
+                  <thead>
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <tr key={headerGroup.id}>
+                        {headerGroup.headers.map((header) => (
+                          <th
+                            key={header.id}
+                            className="px-4 py-2 text-left text-lg border border-gray-300 bg-gray-50 relative"
+                          >
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext()
+                                )}
+                            <button
+                              onClick={() => removeColumn(header.id)}
+                              className="absolute top-1 right-1 text-red-600 hover:text-red-800"
+                            >
+                              ×
+                            </button>
+                          </th>
+                        ))}
+                      </tr>
                     ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {table.getRowModel().rows.map((row) => (
-                  <tr key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <td
-                        key={cell.id}
-                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </td>
+                  </thead>
+                  <tbody>
+                    {table.getRowModel().rows.map((row) => (
+                      <tr key={row.id}>
+                        {row.getVisibleCells().map((cell) => (
+                          <td
+                            key={cell.id}
+                            className="border border-gray-300 px-4 py-2 text-lg"
+                          >
+                            <input
+                              type="text"
+                              value={cell.getValue() || ''}
+                              onChange={(e) =>
+                                handleCellChange(
+                                  row.index,
+                                  cell.column.id,
+                                  e.target.value
+                                )
+                              }
+                              className="w-full border-none bg-transparent focus:ring-2 focus:ring-indigo-600 text-lg"
+                            />
+                          </td>
+                        ))}
+                        <td className="border border-gray-300 px-4 py-2 text-center">
+                          <button
+                            onClick={() => removeRow(row.index)}
+                            className="text-red-600 hover:underline"
+                          >
+                            Remove
+                          </button>
+                        </td>
+                      </tr>
                     ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {data.length === 0 && (
-              <div className="text-center py-12">
-                <FileSpreadsheet className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">
-                  No data available. Import a spreadsheet or add rows and columns to
-                  get started.
-                </p>
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
