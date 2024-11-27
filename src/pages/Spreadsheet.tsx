@@ -8,12 +8,10 @@ import {
   MinusCircle, // Ícone para remover
   AlertCircle,
   CheckCircle,
-  Loader,
 } from 'lucide-react';
-import { read, utils, writeFile } from 'xlsx';
+import ExcelJS from 'exceljs'; // Importe o ExcelJS
 import {
   createColumnHelper,
-  flexRender,
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
@@ -40,15 +38,23 @@ export default function Spreadsheet() {
     setError('');
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
-        const workbook = read(e.target?.result, { type: 'binary' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(e.target?.result as ArrayBuffer);
 
-        const jsonData = utils.sheet_to_json<SpreadsheetData>(worksheet, {
-          header: 1,
-          defval: '',
+        const worksheet = workbook.worksheets[0];
+        const jsonData: SpreadsheetData[] = [];
+
+        // Convert the worksheet rows to JSON
+        worksheet.eachRow((row, rowIndex) => {
+          if (rowIndex === 1) return; // Skip the first row (header)
+          const rowData: SpreadsheetData = {};
+          row.eachCell((cell, colIndex) => {
+            const columnHeader = worksheet.getRow(1).getCell(colIndex).value as string;
+            rowData[columnHeader] = cell.value ?? null;
+          });
+          jsonData.push(rowData);
         });
 
         if (jsonData.length > 0) {
@@ -69,15 +75,7 @@ export default function Spreadsheet() {
 
           setColumns(cols);
 
-          const updatedData = jsonData.map((row: any) => {
-            const filledRow: SpreadsheetData = {};
-            allColumns.forEach((col) => {
-              filledRow[col] = row[col] || null;
-            });
-            return filledRow;
-          });
-
-          setData(updatedData);
+          setData(jsonData);
           setImportSuccess(true);
         }
       } catch (err) {
@@ -86,23 +84,44 @@ export default function Spreadsheet() {
         setLoading(false);
       }
     };
+
     reader.onerror = () => {
       setError('Error reading file');
       setLoading(false);
     };
-    reader.readAsBinaryString(file);
+
+    reader.readAsArrayBuffer(file); // Use readAsArrayBuffer para arquivos binários
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (data.length === 0) {
       setError('No data to export');
       return;
     }
 
-    const worksheet = utils.json_to_sheet(data);
-    const workbook = utils.book_new();
-    utils.book_append_sheet(workbook, worksheet, 'Sheet1');
-    writeFile(workbook, 'exported_data.xlsx');
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Sheet1');
+
+    // Adicionar colunas ao worksheet
+    const columns = Object.keys(data[0]);
+    worksheet.columns = columns.map((col) => ({ header: col, key: col }));
+
+    // Adicionar as linhas de dados
+    data.forEach((row) => {
+      worksheet.addRow(row);
+    });
+
+    try {
+      await workbook.xlsx.writeBuffer().then((buffer) => {
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'exported_data.xlsx';
+        link.click();
+      });
+    } catch (error) {
+      setError('Error exporting spreadsheet.');
+    }
   };
 
   const addRow = () => {
@@ -132,7 +151,6 @@ export default function Spreadsheet() {
     setData(updatedData);
   };
 
-  // Remover linha específica
   const removeRow = (index: number) => {
     if (index < 0 || index >= data.length) {
       setError('Invalid row index');
@@ -142,27 +160,23 @@ export default function Spreadsheet() {
     setData(updatedData);
   };
 
-  // Remover coluna específica
   const removeColumn = (columnName: string) => {
-    // Verificar se a coluna existe
     const columnExists = columns.some((col) => col.header === columnName);
     
     if (!columnExists) {
       setError('Column not found');
       return;
     }
-  
-    // Remover a coluna
+
     const updatedColumns = columns.filter((col) => col.header !== columnName);
     setColumns(updatedColumns);
-  
-    // Remover a coluna dos dados
+
     const updatedData = data.map((row) => {
       const newRow = { ...row };
-      delete newRow[columnName]; // Remover a chave correspondente à coluna
+      delete newRow[columnName];
       return newRow;
     });
-  
+
     setData(updatedData);
   };
 
@@ -249,78 +263,48 @@ export default function Spreadsheet() {
             {importSuccess && (
               <div className="flex items-center space-x-2 bg-green-100 p-3 rounded-lg text-green-700 mb-4">
                 <CheckCircle className="h-5 w-5" />
-                <span>File imported successfully!</span>
+                <span>Spreadsheet imported successfully!</span>
               </div>
             )}
-            {loading && (
-              <div className="flex justify-center items-center py-6">
-                <Loader className="h-6 w-6 text-indigo-600 animate-spin" />
-              </div>
-            )}
-            {!loading && data.length > 0 && (
-              <div className="table-wrapper">
-                <table className="min-w-full border-collapse border border-gray-200">
-                  <thead>
-                    {table.getHeaderGroups().map((headerGroup) => (
-                      <tr key={headerGroup.id}>
-                        {headerGroup.headers.map((header) => (
-                          <th
-                            key={header.id}
-                            className="px-4 py-2 text-left text-lg border border-gray-300 bg-gray-50 relative"
-                          >
-                            {header.isPlaceholder
-                              ? null
-                              : flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext()
-                                )}
-                            <button
-                              onClick={() => removeColumn(header.id)}
-                              className="absolute top-1 right-1 text-red-600 hover:text-red-800"
-                            >
-                              ×
-                            </button>
-                          </th>
-                        ))}
-                      </tr>
+            <table className="min-w-full table-auto border-collapse border border-gray-200">
+              <thead>
+                {columns.length > 0 && (
+                  <tr>
+                    {columns.map((col) => (
+                      <th key={col.id} className="px-4 py-2 border-b">{col.header}</th>
                     ))}
-                  </thead>
-                  <tbody>
-                    {table.getRowModel().rows.map((row) => (
-                      <tr key={row.id}>
-                        {row.getVisibleCells().map((cell) => (
-                          <td
-                            key={cell.id}
-                            className="border border-gray-300 px-4 py-2 text-lg"
-                          >
-                            <input
-                              type="text"
-                              value={cell.getValue() || ''}
-                              onChange={(e) =>
-                                handleCellChange(
-                                  row.index,
-                                  cell.column.id,
-                                  e.target.value
-                                )
-                              }
-                              className="w-full border-none bg-transparent focus:ring-2 focus:ring-indigo-600 text-lg"
-                            />
-                          </td>
-                        ))}
-                        <td className="border border-gray-300 px-4 py-2 text-center">
-                          <button
-                            onClick={() => removeRow(row.index)}
-                            className="text-red-600 hover:underline"
-                          >
-                            Remove
-                          </button>
+                    <th className="px-4 py-2 border-b">Actions</th>
+                  </tr>
+                )}
+              </thead>
+              <tbody>
+                {data.length > 0 &&
+                  data.map((row, rowIndex) => (
+                    <tr key={rowIndex}>
+                      {columns.map((col) => (
+                        <td key={col.id} className="px-4 py-2 border-b">
+                          <input
+                            type="text"
+                            value={row[col.header]}
+                            onChange={(e) =>
+                              handleCellChange(rowIndex, col.header, e.target.value)
+                            }
+                            className="w-full px-2 py-1 text-sm rounded-md border border-gray-300"
+                          />
                         </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                      ))}
+                      <td className="px-4 py-2 border-b">
+                        <button
+                          onClick={() => removeRow(rowIndex)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <MinusCircle className="h-5 w-5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@headlessui/react": "^2.2.0",
+    "@react-three/drei": "^9.117.3",
+    "@react-three/fiber": "^8.17.10",
     "@stomp/stompjs": "^7.0.0",
     "@tanstack/react-table": "^8.20.5",
     "@tiptap/extension-highlight": "^2.10.1",
@@ -20,6 +22,7 @@
     "@tiptap/starter-kit": "^2.10.1",
     "axios": "^1.6.7",
     "clsx": "^2.1.1",
+    "exceljs": "^4.4.0",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-calendar": "^5.1.0",
@@ -28,9 +31,10 @@
     "react-toastify": "^10.0.6",
     "sockjs-client": "^1.6.1",
     "sonner": "^1.7.0",
+    "tailwind-merge": "^2.5.5",
+    "three": "^0.170.0",
     "tiptap": "^0.15.0",
     "vite-react-typescript-starter": "file:",
-    "xlsx": "^0.18.5",
     "zustand": "^4.5.2"
   },
   "devDependencies": {

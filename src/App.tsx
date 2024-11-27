@@ -7,7 +7,7 @@ import Profile from './pages/Profile';
 import QuestCreation from './pages/QuestCreation';
 import Calendar from './pages/Calendar';
 import Ranking from './pages/Ranking';
-import Notes from './pages/Notes'
+import Notes from './pages/Notes';
 import About from './pages/About';
 import Spreadsheet from './pages/Spreadsheet';
 import { useEffect } from 'react';
@@ -36,7 +36,7 @@ const useAuthSync = () => {
         if (token && user) {
           const parsedUser = JSON.parse(user);
           setUser({ ...parsedUser, token }); // Atualiza o estado global com os dados do usuário
-          fetchUser();
+          fetchUser(); // Chama a função para buscar dados adicionais do usuário, se necessário
         } else {
           setUser(null); // Limpa o estado se não houver dados
         }
@@ -60,6 +60,24 @@ const useAuthSync = () => {
       window.removeEventListener('storage', handleStorageChange);
     };
   }, [setUser]);
+
+  const fetchUser = async () => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      try {
+        const response = await fetch('/api/user', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await response.json();
+        setUser(data); // Atualiza o estado com os dados do usuário
+      } catch (error) {
+        console.error('Erro ao buscar dados do usuário:', error);
+        setUser(null); // Limpar os dados do usuário em caso de erro
+      }
+    }
+  };
 };
 
 function App() {
@@ -123,7 +141,7 @@ function App() {
             </PrivateRoute>
           }
         />
-          <Route
+        <Route
           path="/ranking"
           element={
             <PrivateRoute>
@@ -131,7 +149,7 @@ function App() {
             </PrivateRoute>
           }
         />
-          <Route
+        <Route
           path="/notes"
           element={
             <PrivateRoute>
@@ -139,7 +157,7 @@ function App() {
             </PrivateRoute>
           }
         />
-          <Route
+        <Route
           path="/about"
           element={
             <PrivateRoute>
@@ -153,7 +171,3 @@ function App() {
 }
 
 export default App;
-function fetchUser() {
-  throw new Error('Function not implemented.');
-}
-

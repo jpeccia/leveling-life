@@ -100,6 +100,8 @@ export default function Calendar() {
       const isToday = new Date().getDate() === day &&
                      new Date().getMonth() === currentDate.getMonth() &&
                      new Date().getFullYear() === currentDate.getFullYear();
+      const hasQuests = dayQuests.length > 0;
+
 
       days.push(
         <div
@@ -126,13 +128,18 @@ export default function Calendar() {
                     title={`${quest.title} (${config.label})`}
                   >
                     <div className="flex items-center space-x-1">
-                      <Icon className={`w-3 h-3 ${config.color} text-white`} />
+                      <Icon className={`w-5 h-5 ${config.color} text-white`} />
                       <span className="line-clamp-1">{quest.title}</span>
                     </div>
                   </div>
                 );
               })}
           </div>
+          {!hasQuests && (
+            <div className="mt-1 text-xs text-gray-500 text-center italic">
+              No quests
+            </div>
+          )}
         </div>
       );
     }

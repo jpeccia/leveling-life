@@ -86,3 +86,18 @@
   padding: 0.5em;
   outline: none;
 }
+
+.absolute {
+  position: absolute;
+}
+
+.inset-0 {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.object-cover {
+  object-fit: cover;
+}

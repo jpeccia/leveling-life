@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
-import { Clock, AlertCircle } from 'lucide-react';
+import { Clock, AlertCircle, Sparkles } from 'lucide-react';
 import api from '../lib/axios';
 import { toast } from 'sonner';
 import Calendar from 'react-calendar'; // Importando o componente do calendário
@@ -97,14 +97,13 @@ export default function QuestCreation() {
             <Clock className="h-8 w-8 text-indigo-600" />
             <h1 className="text-2xl font-bold text-gray-900">Create New Quest</h1>
           </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="bg-red-50 text-red-500 p-4 rounded-lg flex items-center space-x-2" aria-live="assertive">
-                <AlertCircle className="h-5 w-5" />
-                <span>{error}</span>
-              </div>
-            )}
+          <form onSubmit={handleSubmit} className="space-y-8">
+              {error && (
+                <div className="bg-red-900/50 text-red-200 p-4 rounded-lg backdrop-blur-sm border border-red-500/20 flex items-center space-x-2">
+                  <Sparkles className="h-5 w-5" />
+                  <span>{error}</span>
+                </div>
+              )}
 
             <Input
               label="Title"
