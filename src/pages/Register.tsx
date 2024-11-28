@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import Logo from '../components/Logo';
 import api from '../lib/axios';
-import { toast } from 'sonner'; // Importando diretamente o `toast` para notificações
+import { toast } from 'sonner';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -17,23 +17,50 @@ export default function Register() {
     confirmPassword: '',
     acceptTerms: false,
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState<string | null>(null);
 
-  const validateForm = () => {
-    if (!formData.name.trim()) return 'Name is required';
-    if (!formData.username.trim()) return 'Username is required';
-    if (!formData.email.trim() || !formData.email.includes('@'))
-      return 'Valid email is required';
-    if (formData.password.length < 6)
-      return 'Password must be at least 6 characters';
-    if (formData.password !== formData.confirmPassword)
-      return 'Passwords do not match';
-    if (!formData.acceptTerms)
-      return 'You must accept the terms and conditions';
-    return null;
+  // Valida a força da senha em tempo real
+  const validatePasswordStrength = (password: string) => {
+    const strengthRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (strengthRegex.test(password)) {
+      setPasswordStrength('Senha forte');
+    } else {
+      setPasswordStrength('A senha deve ter pelo menos 8 caracteres, incluindo uma letra maiúscula, uma minúscula, um número e um caractere especial.');
+    }
   };
 
+  // Manipula mudanças de input no formulário
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === 'acceptTerms' ? checked : value,
+    }));
+
+    // Atualiza a força da senha em tempo real
+    if (name === 'password') {
+      validatePasswordStrength(value);
+    }
+  };
+
+  // Valida os dados do formulário antes do envio
+  const validateForm = useCallback(() => {
+    if (!formData.name.trim()) return 'Nome é obrigatório';
+    if (!formData.username.trim()) return 'Nome de usuário é obrigatório';
+    if (!formData.email.trim() || !formData.email.includes('@'))
+      return 'Email válido é obrigatório';
+    if (formData.password.length < 6)
+      return 'A senha deve ter pelo menos 6 caracteres';
+    if (formData.password !== formData.confirmPassword)
+      return 'As senhas não coincidem';
+    if (!formData.acceptTerms)
+      return 'Você deve aceitar os termos e condições';
+    return null;
+  }, [formData]);
+
+  // Manipula o envio do formulário e validação
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -53,31 +80,32 @@ export default function Register() {
         email: formData.email,
         password: formData.password,
       });
-      toast.success('Account created successfully!');
+
+      toast.success('Conta criada com sucesso!');
       navigate('/login');
     } catch (err: any) {
       if (err.response) {
         switch (err.response.status) {
           case 400:
-            setError('Bad request. Please check your input.');
-            toast.error('Bad request. Please check your input.');
+            setError('Requisição inválida. Verifique seus dados.');
+            toast.error('Requisição inválida. Verifique seus dados.');
             break;
           case 409:
-            setError('Username or email already exists');
-            toast.error('Username or email already exists');
+            setError('Nome de usuário ou email já existe');
+            toast.error('Nome de usuário ou email já existe');
             break;
           case 500:
-            setError('Server error. Please try again later.');
-            toast.error('Server error. Please try again later.');
+            setError('Erro no servidor. Tente novamente mais tarde.');
+            toast.error('Erro no servidor. Tente novamente mais tarde.');
             break;
           default:
-            setError('Registration failed. Please try again.');
-            toast.error('Registration failed. Please try again.');
+            setError('Falha no registro. Tente novamente.');
+            toast.error('Falha no registro. Tente novamente.');
             break;
         }
       } else {
-        setError('Network error. Please check your connection.');
-        toast.error('Network error. Please check your connection.');
+        setError('Erro de rede. Verifique sua conexão.');
+        toast.error('Erro de rede. Verifique sua conexão.');
       }
     } finally {
       setIsSubmitting(false);
@@ -98,137 +126,94 @@ export default function Register() {
             </div>
           )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Name
-            </label>
-            <input
-              type="text"
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Username
-            </label>
-            <input
-              type="text"
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              value={formData.username}
-              onChange={(e) =>
-                setFormData({ ...formData, username: e.target.value })
-              }
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
-            />
-          </div>
+          {['nome', 'usuário', 'email'].map((field) => (
+            <div key={field}>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {field.charAt(0).toUpperCase() + field.slice(1)}
+              </label>
+              <input
+                type={field === 'email' ? 'email' : 'text'}
+                name={field}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                value={formData[field as keyof typeof formData]}
+                onChange={handleChange}
+              />
+            </div>
+          ))}
 
           <div className="relative">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Senha</label>
             <input
               type={showPassword ? 'text' : 'password'}
+              name="password"
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               value={formData.password}
-              onChange={(e) =>
-                setFormData({ ...formData, password: e.target.value })
-              }
+              onChange={handleChange}
             />
             <button
               type="button"
               className="absolute right-3 top-8 text-gray-400"
               onClick={() => setShowPassword(!showPassword)}
-              title="Toggle password visibility"
+              title="Alternar visibilidade da senha"
             >
-              {showPassword ? (
-                <EyeOff className="h-5 w-5" />
-              ) : (
-                <Eye className="h-5 w-5" />
-              )}
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
+            {passwordStrength && (
+              <p className={`mt-2 text-sm ${passwordStrength === 'Senha forte' ? 'text-green-500' : 'text-red-500'}`}>
+                {passwordStrength}
+              </p>
+            )}
           </div>
 
           <div className="relative">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Confirm Password
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar Senha</label>
             <input
               type={showConfirmPassword ? 'text' : 'password'}
+              name="confirmPassword"
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               value={formData.confirmPassword}
-              onChange={(e) =>
-                setFormData({ ...formData, confirmPassword: e.target.value })
-              }
+              onChange={handleChange}
             />
             <button
               type="button"
               className="absolute right-3 top-8 text-gray-400"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              title="Toggle password visibility"
+              title="Alternar visibilidade da senha"
             >
-              {showConfirmPassword ? (
-                <EyeOff className="h-5 w-5" />
-              ) : (
-                <Eye className="h-5 w-5" />
-              )}
+              {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
           </div>
 
           <div className="flex items-center">
             <input
               type="checkbox"
+              name="acceptTerms"
               id="terms"
               className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
               checked={formData.acceptTerms}
-              onChange={(e) =>
-                setFormData({ ...formData, acceptTerms: e.target.checked })
-              }
+              onChange={handleChange}
             />
             <label htmlFor="terms" className="ml-2 text-sm text-gray-600">
-              I accept the terms and conditions
+              Aceito os termos e condições
             </label>
           </div>
 
           <button
             type="submit"
-            className={`w-full ${
-              isSubmitting
-                ? 'bg-indigo-400 cursor-not-allowed'
-                : 'bg-indigo-600 hover:bg-indigo-700'
-            } text-white py-2 px-4 rounded-lg transition duration-200`}
+            className={`w-full ${isSubmitting ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'} text-white py-2 px-4 rounded-lg transition duration-200`}
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Creating...' : 'Create Account'}
+            {isSubmitting ? 'Criando...' : 'Criar Conta'}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-gray-600">
-          Already have an account?{' '}
+          Já tem uma conta?{' '}
           <Link to="/login" className="text-indigo-600 hover:text-indigo-500">
-            Sign in
+            Entrar
           </Link>
         </p>
       </div>

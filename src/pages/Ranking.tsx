@@ -59,9 +59,9 @@ export default function Ranking() {
         <div className="bg-white rounded-2xl shadow-sm p-8">
           <div className="flex items-center space-x-4 mb-8">
             <Trophy className="h-8 w-8 text-indigo-600" />
-            <h1 className="text-2xl font-bold text-gray-900">Leaderboard</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Hall of Fame</h1>
           </div>
-
+          
           <div className="grid md:grid-cols-2 gap-6">
             {/* Ranking List */}
             <div className="space-y-4">

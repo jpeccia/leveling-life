@@ -1,7 +1,6 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard,
   User,
   Calendar,
   Trophy,
@@ -9,11 +8,11 @@ import {
   LogOut,
   PlusSquare,
   FileSpreadsheet,
-  Sparkles,
+  NotebookPenIcon,
+  HomeIcon,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { ExperienceBar } from './ExperienceBar';
-import { VideoBackground } from './VideoBackground';
 import { cn } from '../lib/utils';
 
 interface LayoutProps {
@@ -42,14 +41,14 @@ export function Layout({ children }: LayoutProps) {
    * Configuração dos itens do menu lateral.
    */
   const menuItems = [
-    { icon: LayoutDashboard, label: 'Quest Log', path: '/' },
-    { icon: User, label: 'Character Sheet', path: '/profile' },
-    { icon: PlusSquare, label: 'New Quest', path: '/quests/create' },
-    { icon: Calendar, label: 'Adventure Timeline', path: '/calendar' },
-    { icon: FileSpreadsheet, label: 'Inventory', path: '/spreadsheet' },
-    { icon: Trophy, label: 'Hall of Fame', path: '/ranking' },
-    { icon: Sparkles, label: 'Spell Book', path: '/notes' },
-    { icon: Info, label: 'Lore', path: '/about' },
+    { icon: HomeIcon, label: 'Home', path: '/' },
+    { icon: User, label: 'Meu perfil', path: '/profile' },
+    { icon: PlusSquare, label: 'Nova Missão', path: '/quests/create' },
+    { icon: Calendar, label: 'Calendário', path: '/calendar' },
+    { icon: FileSpreadsheet, label: 'Planilhas', path: '/spreadsheet' },
+    { icon: Trophy, label: 'Ranking', path: '/ranking' },
+    { icon: NotebookPenIcon, label: 'Notas', path: '/notes' },
+    { icon: Info, label: 'Sobre', path: '/about' },
   ];
 
   return (
@@ -140,10 +139,10 @@ export function Layout({ children }: LayoutProps) {
             <button
               onClick={handleLogout}
               className="flex items-center space-x-3 text-gray-300 hover:text-red-400 w-full px-4 py-3 rounded-lg transition-all duration-300 hover:bg-red-950/30 group"
-              aria-label="Log Out"
+              aria-label="Sair"
             >
               <LogOut className="h-5 w-5 transition-transform duration-300 group-hover:scale-110 group-hover:-translate-x-1" />
-              <span>Log Out</span>
+              <span>Sair</span>
             </button>
           </div>
         </aside>

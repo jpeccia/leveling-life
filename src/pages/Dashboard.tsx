@@ -141,8 +141,8 @@ export default function Dashboard() {
       toast.success('Quest updated successfully!');
       setShowEditModal(false);
     } catch (error) {
-      console.error('Failed to update quest:', error);
-      toast.error('Failed to update quest. Please try again later.');
+      console.error('Falha na atualização da Missão:', error);
+      toast.error('Falha na atualização da Missão. Por favor, tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -184,7 +184,7 @@ export default function Dashboard() {
                         {type === "monthly" && <Wand2 className="h-5 w-5 text-white" />}
                       </div>
                       <h2 className="text-xl font-bold text-gray-900 capitalize">
-                        {type} Quests
+                        Missão {type}
                       </h2>
                     </div>
                     <button
@@ -250,21 +250,21 @@ export default function Dashboard() {
           <div className="space-y-6">
                         {/* Quick Access */}
                         <div className="bg-white rounded-2xl shadow-xl p-6 border border-indigo-100">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Access</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Atalho</h2>
               <div className="grid grid-cols-2 gap-4">
                 <button
                   onClick={() => navigate('/spreadsheet')}
                   className="p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-100 hover:shadow-md transition-shadow group"
                 >
                   <FileSpreadsheet className="h-6 w-6 text-indigo-600 mx-auto mb-2" />
-                  <span className="text-sm text-gray-600 group-hover:text-indigo-600">Spreadsheet</span>
+                  <span className="text-sm text-gray-600 group-hover:text-indigo-600">Inventário</span>
                 </button>
                 <button
                   onClick={() => navigate('/notes')}
                   className="p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-100 hover:shadow-md transition-shadow group"
                 >
                   <FileText className="h-6 w-6 text-indigo-600 mx-auto mb-2" />
-                  <span className="text-sm text-gray-600 group-hover:text-indigo-600">Notes</span>
+                  <span className="text-sm text-gray-600 group-hover:text-indigo-600">Notas</span>
                 </button>
               </div>
             </div>

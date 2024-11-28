@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 
 interface VideoBackgroundProps {
   children: ReactNode;
+  className: string;
 }
 
 export function VideoBackground({ children }: VideoBackgroundProps) {

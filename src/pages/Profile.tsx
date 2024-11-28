@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import api from '../lib/axios';
 import { toast } from 'sonner';
+import WeatherActivity from '../components/WeatherActivity';
 
 type EditMode = 'profile' | 'password' | null;
 
@@ -68,12 +69,6 @@ export default function Profile() {
   const calculateXpForNextLevel = (level: number) => {
     return level * 800; // Exemplo: cada nível requer 800 XP a mais
   };
-
-  const achievements = [
-    { icon: Trophy, label: 'Quest Master', description: 'Completed 100 quests' },
-    { icon: Star, label: 'Rising Star', description: 'Reached level 10' },
-    { icon: Award, label: 'Early Bird', description: 'Completed 30 daily quests' },
-  ];
 
   const nextLevelXp = calculateXpForNextLevel(user?.level || 1);
 
@@ -324,39 +319,18 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Middle Column - Stats & Forms */}
-          <div className="lg:col-span-2">
-            <div className="space-y-6">
-              {/* Achievements */}
-              <div className="bg-white rounded-2xl shadow-xl p-8 border border-indigo-100">
-                <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                  <Trophy className="h-5 w-5 text-indigo-600 mr-2" />
-                  Achievements
-                </h2>
-                <div className="grid gap-4">
-                  {achievements.map((achievement, index) => {
-                    const Icon = achievement.icon;
-                    return (
-                      <div
-                        key={index}
-                        className="flex items-center space-x-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-100"
-                      >
-                        <div className="p-2 bg-white rounded-lg shadow-md">
-                          <Icon className="h-6 w-6 text-indigo-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">
-                            {achievement.label}
-                          </h3>
-                          <p className="text-sm text-gray-600">
-                            {achievement.description}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+      {/* Middle Column - Stats & Forms */}
+      <div className="lg:col-span-2">
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl shadow-xl p-8 border border-indigo-100">
+            <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+              Recomendações do Dia
+            </h2>
+            {/* Recomendações de atividades baseadas no clima */}
+            <WeatherActivity />
+
+          </div>
+
 
               {/* Profile Settings */}
               {editMode === null ? (

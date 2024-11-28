@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { Input } from '../components/Input';
@@ -6,56 +6,67 @@ import { Button } from '../components/Button';
 import Logo from '../components/Logo';
 import api from '../lib/axios';
 import { useAuthStore } from '../store/authStore';
-import { toast } from 'sonner'; // Importação corrigida
+import { toast } from 'sonner'; // Biblioteca para notificações
+import { Spinner } from '../components/Spinner'; // Componente de carregamento (opcional)
 
 export default function Login() {
+  // Navegação entre páginas
   const navigate = useNavigate();
   const setUser = useAuthStore((state) => state.setUser);
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    username: '',
-    password: '',
-  });
+  const [formData, setFormData] = useState({ username: '', password: '' });
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Função para lidar com o envio do formulário de login
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     try {
+      // Requisição para autenticar o usuário
       const response = await api.post('/auth/login', formData);
       const { token } = response.data;
 
+      // Armazenamento seguro do token - considere usar HttpOnly Cookies em produção
       localStorage.setItem('token', token);
 
+      // Requisição para buscar as informações do usuário com o token
       const userResponse = await api.get('/user/', {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       const user = userResponse.data;
+
+      // Armazenamento do usuário no localStorage
       localStorage.setItem('user', JSON.stringify(user));
       setUser(user);
 
-      toast.success('Login successful!');
+      // Notificação de sucesso
+      toast.success('Login realizado com sucesso!');
       navigate('/');
     } catch (err: any) {
+      // Tratamento de erros com mensagens detalhadas
       if (err.response) {
         switch (err.response.status) {
           case 401:
-            toast.error('Incorrect password');
+            toast.error('Usuário ou senha incorreta');
             break;
           case 403:
-            toast.error('Access forbidden');
+            toast.error('Acesso proibido');
             break;
           case 404:
-            toast.error('User not found');
+            toast.error('Usuário não encontrado');
             break;
           default:
-            toast.error('An unexpected error occurred');
+            toast.error('Ocorreu um erro inesperado. Tente novamente mais tarde');
             break;
         }
       } else {
-        toast.error('Network error, please try again later');
+        toast.error('Erro de rede. Verifique sua conexão');
       }
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [formData, setUser, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-100 to-white flex items-center justify-center p-4">
@@ -65,17 +76,19 @@ export default function Login() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Campo de username */}
           <Input
             label="Username"
             type="text"
             required
             value={formData.username}
             onChange={(e) =>
-              setFormData({ ...formData, username: e.target.value })
+              setFormData((prev) => ({ ...prev, username: e.target.value }))
             }
             autoComplete="username"
           />
 
+          {/* Campo de password */}
           <div className="relative">
             <Input
               label="Password"
@@ -83,7 +96,7 @@ export default function Login() {
               required
               value={formData.password}
               onChange={(e) =>
-                setFormData({ ...formData, password: e.target.value })
+                setFormData((prev) => ({ ...prev, password: e.target.value }))
               }
               autoComplete="current-password"
             />
@@ -100,18 +113,22 @@ export default function Login() {
             </button>
           </div>
 
-          <Button type="submit">Sign In</Button>
+          {/* Botão de login com indicador de carregamento */}
+          <Button type="submit" disabled={loading}>
+            {loading ? <Spinner /> : 'Sign In'}
+          </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-gray/80">
-            New adventurer?{' '}
-            <Link
-              to="/register"
-              className="text-indigo-300 hover:text-indigo-200 transition-colors font-medium"
-            >
-              Sign Up
-            </Link>
-          </p>
+        {/* Link para a página de cadastro */}
+        <p className="mt-6 text-center text-sm text-gray-800">
+          New adventurer?{' '}
+          <Link
+            to="/register"
+            className="text-indigo-300 hover:text-indigo-200 transition-colors font-medium"
+          >
+            Sign Up
+          </Link>
+        </p>
       </div>
     </div>
   );

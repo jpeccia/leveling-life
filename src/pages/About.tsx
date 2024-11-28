@@ -1,7 +1,11 @@
 import { Layout } from '../components/Layout';
 import { Github, Linkedin, Mail, Instagram, Heart } from 'lucide-react';
 
+/**
+ * Componente que exibe informações sobre o projeto "Leveling Life".
+ */
 export default function About() {
+  // Lista de links para redes sociais com ícones, cores e URLs.
   const socialLinks = [
     {
       icon: Github,
@@ -29,6 +33,7 @@ export default function About() {
     },
   ];
 
+  // Lista de recursos e funcionalidades do projeto.
   const features = [
     {
       title: 'Quest System',
@@ -75,7 +80,7 @@ export default function About() {
           <div className="grid md:grid-cols-2 gap-8">
             {features.map((feature, index) => (
               <div
-                key={index}
+                key={feature.title} // Uso de uma chave única e descritiva
                 className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow"
               >
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -92,7 +97,7 @@ export default function About() {
               <div className="text-center mb-8">
                 <img
                   src="https://avatars.githubusercontent.com/u/116593320?v=4"
-                  alt="Creator"
+                  alt="João Peccia"
                   className="w-32 h-32 rounded-full mx-auto mb-4 object-cover"
                 />
                 <h2 className="text-2xl font-bold text-gray-900">João Peccia</h2>
@@ -107,12 +112,13 @@ export default function About() {
                   experience.
                 </p>
 
+                {/* Redes sociais com links seguros */}
                 <div className="flex justify-center space-x-4">
-                  {socialLinks.map((link, index) => {
-                    const Icon = link.icon;
+                  {socialLinks.map((link) => {
+                    const Icon = link.icon; // Desestruturação do ícone
                     return (
                       <a
-                        key={index}
+                        key={link.href} // Uso de chave única para cada link
                         href={link.href}
                         target="_blank"
                         rel="noopener noreferrer"

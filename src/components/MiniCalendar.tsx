@@ -18,64 +18,86 @@ interface MiniCalendarProps {
 }
 
 /**
- * MiniCalendar Component
+ * Componente MiniCalendar
  * 
- * @param {Function} onExpand - Callback to expand the calendar view.
- * @param {Quest[]} quests - List of quests with date, type, and completion status.
+ * @param {Function} onExpand - Função de callback para expandir a visualização do calendário.
+ * @param {Quest[]} quests - Lista de missões com data, tipo e status de conclusão.
  */
 export function MiniCalendar({ onExpand, quests }: MiniCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
 
+  // Retorna o número de dias no mês atual
   const getDaysInMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
 
+  // Retorna o primeiro dia da semana do mês atual
   const getFirstDayOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
 
+  // Navega para o mês anterior
   const previousMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
 
+  // Navega para o próximo mês
   const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
 
+  // Retorna à data de hoje
   const goToToday = () => setCurrentDate(new Date());
 
+  /**
+   * Filtra as missões que correspondem a um dia específico.
+   * 
+   * @param {number} day - O dia do mês para filtrar as missões.
+   * @returns {Quest[]} - Lista de missões que correspondem à data fornecida.
+   */
   const getDayQuests = (day: number) => {
     return quests.filter(quest => {
       const dueDate = new Date(quest.dueDate);
-      // Garantir que o dueDate tenha apenas a data, sem considerar a hora
-      const formattedDueDate = dueDate.toISOString().split('T')[0];  // Formato YYYY-MM-DD
-  
-      // Cria a data para o dia atual (currentDate) e formata também
+      // Garantir que a data de vencimento considere apenas a data, sem hora
+      const formattedDueDate = dueDate.toISOString().split('T')[0];
+
+      // Cria a data para o dia atual e formata também
       const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-      const formattedTargetDate = targetDate.toISOString().split('T')[0];  // Formato YYYY-MM-DD
-  
-      // Compara as duas datas formatadas, sem considerar horas ou minutos
+      const formattedTargetDate = targetDate.toISOString().split('T')[0];
+
+      // Compara as duas datas formatadas, sem considerar horas
       return formattedDueDate === formattedTargetDate;
     });
   };
 
+  /**
+   * Configura o tipo de missão com ícone, cor e rótulo.
+   * 
+   * @param {string} type - O tipo de missão.
+   * @returns {Object} - Configuração da missão com ícone, cor e rótulo.
+   */
   const getQuestTypeConfig = (type: string) => {
     switch (type) {
-      case 'DAILY': return { icon: Sword, color: 'bg-blue-400', label: 'Daily Quest' };
-      case 'WEEKLY': return { icon: Shield, color: 'bg-purple-400', label: 'Weekly Mission' };
-      case 'MONTHLY': return { icon: Wand2, color: 'bg-amber-400', label: 'Epic Quest' };
-      default: return { icon: Scroll, color: 'bg-gray-400', label: 'Quest' };
+      case 'DAILY': return { icon: Sword, color: 'bg-blue-400', label: 'Missão Diária' };
+      case 'WEEKLY': return { icon: Shield, color: 'bg-purple-400', label: 'Missão Semanal' };
+      case 'MONTHLY': return { icon: Wand2, color: 'bg-amber-400', label: 'Missão Épica' };
+      default: return { icon: Scroll, color: 'bg-gray-400', label: 'Missão' };
     }
   };
 
   const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
   ];
 
+  /**
+   * Renderiza o calendário com dias e missões.
+   * 
+   * @returns {JSX.Element[]} - Elementos JSX para renderizar os dias do calendário.
+   */
   const renderCalendar = () => {
     const daysInMonth = getDaysInMonth(currentDate);
     const firstDay = getFirstDayOfMonth(currentDate);
     const days = [];
 
-    // Empty cells for days before the first day of the month
+    // Células vazias antes do primeiro dia do mês
     for (let i = 0; i < firstDay; i++) {
       days.push(<div key={`empty-${i}`} className="h-24 bg-gray-50/30 border border-indigo-100/20" />);
     }
 
-    // Cells for each day of the month
+    // Células para cada dia do mês
     for (let day = 1; day <= daysInMonth; day++) {
       const dayQuests = getDayQuests(day);
       const isToday = new Date().toDateString() === new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toDateString();
@@ -126,7 +148,7 @@ export function MiniCalendar({ onExpand, quests }: MiniCalendarProps) {
           )}
           {!hasQuests && (
             <div className="mt-8 text-xs text-gray-500 text-center italic">
-              No quests
+              Sem missões
             </div>
           )}
         </div>
@@ -137,8 +159,8 @@ export function MiniCalendar({ onExpand, quests }: MiniCalendarProps) {
   };
 
   return (
-<div className="w-full bg-white rounded-xl shadow-lg overflow-hidden border border-indigo-100">
-<div className="flex flex-row items-center justify-between p-6 border-b border-indigo-100 bg-gradient-to-r from-indigo-50 to-purple-50">
+    <div className="w-full bg-white rounded-xl shadow-lg overflow-hidden border border-indigo-100">
+      <div className="flex flex-row items-center justify-between p-6 border-b border-indigo-100 bg-gradient-to-r from-indigo-50 to-purple-50">
         <div className="flex items-center space-x-3">
           <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg shadow-md animate-float">
             <CalendarIcon className="h-5 w-5 text-white" />
@@ -147,21 +169,21 @@ export function MiniCalendar({ onExpand, quests }: MiniCalendarProps) {
         <div className="flex space-x-4">
           <div className="flex items-center space-x-2">
             <Sword className="w-4 h-4 text-blue-400" />
-            <span className="text-xs text-gray-600">Daily</span>
+            <span className="text-xs text-gray-600">Diária</span>
           </div>
           <div className="flex items-center space-x-2">
             <Shield className="w-4 h-4 text-purple-400" />
-            <span className="text-xs text-gray-600">Weekly</span>
+            <span className="text-xs text-gray-600">Semanal</span>
           </div>
           <div className="flex items-center space-x-2">
             <Wand2 className="w-4 h-4 text-amber-400" />
-            <span className="text-xs text-gray-600">Monthly</span>
+            <span className="text-xs text-gray-600">Mensal</span>
           </div>
         </div>
         <button
           onClick={onExpand}
           className="p-2 hover:bg-indigo-50 rounded-lg transition-colors group"
-          title="Expand calendar"
+          title="Expandir calendário"
         >
           <Maximize2 className="h-5 w-5 text-gray-400 group-hover:text-indigo-600 transform group-hover:scale-110 transition-transform" />
         </button>
@@ -179,23 +201,13 @@ export function MiniCalendar({ onExpand, quests }: MiniCalendarProps) {
         </button>
       </div>
 
-      <div className="grid grid-cols-7 bg-gradient-to-r from-indigo-50 to-purple-50">
-        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-          <div key={day} className="h-8 flex items-center justify-center text-xs font-medium text-gray-600">
-            {day}
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-7">
+      <div className="grid grid-cols-7 gap-1 p-3">
         {renderCalendar()}
       </div>
 
-      <div className="p-4 text-center">
-        <button onClick={goToToday} className="text-sm text-indigo-600 hover:underline">
-          Go to Today
-        </button>
-      </div>
+      <button onClick={goToToday} className="block mx-auto my-4 p-2 text-sm bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 transition-colors">
+        Ir para Hoje
+      </button>
     </div>
   );
 }
