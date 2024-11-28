@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { UserPlus, Users, Bell, X } from 'lucide-react';
 import api from '../lib/axios';
+import { toast } from 'sonner';
 
 interface Friend {
   id: string;
@@ -29,20 +30,20 @@ const FriendRequestItem = ({
   onAccept: () => void;
   onReject: () => void;
 }) => (
-  <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+  <div className="flex items-center justify-between p-2 bg-gray-200 rounded-md shadow-sm">
     <div className="flex items-center space-x-2">
       <img
         src={request.sender.profilePicture || `https://ui-avatars.com/api/?name=${request.sender.name}`}
         alt={request.sender.name}
-        className="w-8 h-8 rounded-full"
+        className="w-8 h-8 rounded-full border border-gray-300"
       />
-      <span>{request.sender.name}</span>
+      <span className="text-sm font-medium">{request.sender.name}</span>
     </div>
     <div className="flex space-x-2">
-      <button onClick={onAccept} className="text-green-600 hover:text-green-700">
+      <button onClick={onAccept} className="text-green-600 hover:text-green-700 p-1 rounded focus:outline-none">
         ✓
       </button>
-      <button onClick={onReject} className="text-red-600 hover:text-red-700">
+      <button onClick={onReject} className="text-red-600 hover:text-red-700 p-1 rounded focus:outline-none">
         ✕
       </button>
     </div>
@@ -50,15 +51,15 @@ const FriendRequestItem = ({
 );
 
 const FriendListItem = ({ friend, onRemove }: { friend: Friend; onRemove: () => void }) => (
-  <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+  <div className="flex items-center justify-between p-2 bg-gray-200 rounded-md shadow-sm">
     <div className="flex items-center space-x-2">
       <img
-        src={friend.profilePicture || 'https://ui-avatars.com/api/?name=' + friend?.name}
+        src={friend.profilePicture || `https://ui-avatars.com/api/?name=${friend.name}`}
         alt={friend.name}
-        className="w-8 h-8 rounded-full shadow-lg object-cover transform transition-transform duration-300 hover:scale-105 border-2 border-white" 
-        />
+        className="w-8 h-8 rounded-full border border-gray-300 shadow-sm"
+      />
       <div>
-        <div>{friend.name}</div>
+        <div className="text-sm font-medium">{friend.name}</div>
         {friend.title && (
           <div className="text-xs text-gray-500">{friend.title}</div>
         )}
@@ -67,7 +68,7 @@ const FriendListItem = ({ friend, onRemove }: { friend: Friend; onRemove: () => 
     </div>
     <button
       onClick={onRemove}
-      className="text-red-600 hover:text-red-700"
+      className="text-red-600 hover:text-red-700 p-1 rounded focus:outline-none"
       aria-label={`Remover ${friend.name} dos amigos`}
     >
       <X className="h-5 w-5" />
@@ -84,9 +85,7 @@ export function FriendsList() {
   const [noRequestsMessage, setNoRequestsMessage] = useState(false);
 
   useEffect(() => {
-    if (isExpanded) {
       loadFriendsAndRequests();
-    }
   }, [isExpanded]);
 
   const loadFriendsAndRequests = async () => {
@@ -113,8 +112,10 @@ export function FriendsList() {
       await api.post(`/friends/add/${newFriendUsername}`);
       setNewFriendUsername('');
       loadFriendsAndRequests();
+      toast.success("Você enviou o pedido de amizade com sucesso.");
     } catch (error) {
       console.error('Failed to add friend:', error);
+      toast.error("Falha ao enviar o pedido de amizade.");
     }
   };
 
@@ -127,14 +128,16 @@ export function FriendsList() {
     }
   };
 
-  const handleRemoveFriend = async (friend: Friend) => {
-    try {
-      await api.delete(`/friends/remove/${friend.username}`);
-      loadFriendsAndRequests(); // Recarrega os amigos e solicitações após a remoção
-    } catch (error) {
-      console.error('Failed to remove friend:', error);
-    }
-  };
+const handleRemoveFriend = async (friend: Friend) => {
+  try {
+    api.defaults.headers.Authorization = `Bearer ${localStorage.getItem('token')}`;
+    await api.delete(`/friends/remove/${friend.username}`);
+    loadFriendsAndRequests(); // Recarrega a lista após a remoção
+    toast.success("Amigo removido com sucesso.")
+  } catch (error) {
+    console.error('Failed to remove friend:', error);
+  }
+};
 
   const handleToggleFriends = () => {
     setIsExpanded((prev) => !prev);
@@ -152,7 +155,7 @@ export function FriendsList() {
         {isExpanded && (
           <div className="mb-2 bg-white rounded-lg shadow-lg p-4 w-80">
             <div className="flex justify-between">
-              <h3 className="font-semibold mb-2">Amigos </h3>
+              <h3 className="font-semibold mb-2">Amigos</h3>
               <button
                 onClick={handleToggleFriends}
                 className="text-gray-500 hover:text-gray-700"
@@ -166,10 +169,10 @@ export function FriendsList() {
                   type="text"
                   value={newFriendUsername}
                   onChange={(e) => setNewFriendUsername(e.target.value)}
-                  placeholder="Username"
-                  className="flex-1 px-2 py-1 border rounded"
+                  placeholder="Digite o usuário"
+                  className="flex-1 px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-600"
                 />
-                <button type="submit" className="p-1 rounded bg-indigo-600 text-white">
+                <button type="submit" className="p-1 rounded bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-600">
                   <UserPlus className="h-5 w-5" />
                 </button>
               </div>
@@ -189,7 +192,7 @@ export function FriendsList() {
         {showRequests && (
           <div className="mb-2 bg-white rounded-lg shadow-lg p-4 w-80">
             <div className="flex justify-between">
-              <h3 className="font-semibold mb-2">Friend Requests</h3>
+              <h3 className="font-semibold mb-2">Pedidos de amizade</h3>
               <button
                 onClick={handleToggleRequests}
                 className="text-gray-500 hover:text-gray-700"
@@ -198,7 +201,7 @@ export function FriendsList() {
               </button>
             </div>
             {requests.length === 0 ? (
-              <div className="text-gray-500">No friend requests</div>
+              <div className="text-gray-500">Sem pedidos de amizade</div>
             ) : (
               <div className="space-y-2">
                 {requests.map((request) => (
@@ -217,15 +220,15 @@ export function FriendsList() {
         <div className="flex space-x-2">
           <button
             onClick={handleToggleFriends}
-            className="bg-white p-3 rounded-full shadow-lg hover:bg-gray-50"
+            className="bg-white p-3 rounded-full shadow-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-600"
             aria-label={isExpanded && !showRequests ? 'Collapse Friends List' : 'Expand Friends List'}
           >
             <Users className="h-6 w-6 text-indigo-600" />
           </button>
           <button
             onClick={handleToggleRequests}
-            className="bg-white p-3 rounded-full shadow-lg hover:bg-gray-50 relative"
-            aria-label="Show Friend Requests"
+            className="bg-white p-3 rounded-full shadow-lg hover:bg-gray-50 relative focus:outline-none focus:ring-2 focus:ring-indigo-600"
+            aria-label="Mostrar pedidos de amizades"
           >
             <Bell className="h-6 w-6 text-indigo-600" />
             {requests.length > 0 && (

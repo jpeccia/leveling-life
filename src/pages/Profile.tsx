@@ -248,7 +248,7 @@ export default function Profile() {
               {/* Profile Settings */}
               {editMode === null ? (
                 <div className="bg-white rounded-2xl shadow-xl p-8 border border-indigo-100">
-                  <h2 className="text-xl font-bold text-gray-900 mb-6">Account Settings</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-6">Configurações</h2>
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-600 mb-1">
@@ -276,7 +276,7 @@ export default function Profile() {
                 </div>
               ) : editMode === 'profile' ? (
                 <form onSubmit={handleUpdateProfile} className="bg-white rounded-2xl shadow-xl p-8 border border-indigo-100">
-                  <h2 className="text-xl font-bold text-gray-900 mb-6">Edit Profile</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-6">Editar Perfil</h2>
                   {error && (
                     <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm mb-6">
                       {error}
@@ -329,7 +329,7 @@ export default function Profile() {
                 </form>
               ) : (
                 <form onSubmit={handleUpdatePassword} className="bg-white rounded-2xl shadow-xl p-8 border border-indigo-100">
-                  <h2 className="text-xl font-bold text-gray-900 mb-6">Change Password</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-6">Mudar a Senha</h2>
                   {error && (
                     <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm mb-6">
                       {error}
@@ -388,7 +388,7 @@ export default function Profile() {
   <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
     <div className="bg-white p-8 rounded-lg shadow-lg max-w-lg w-full transform transition-all scale-95 hover:scale-100">
       <h2 className="text-2xl font-semibold text-center text-blue-600 mb-6">Atualizar Foto de Perfil</h2>
-      
+      <span>Gifs são permitidos ao atingir o lvl 50.</span>
       {/* Input para URL da foto */}
       <div className="mb-6">
         <Input

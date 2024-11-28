@@ -78,7 +78,7 @@ export default function Login() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Campo de username */}
           <Input
-            label="Username"
+            label="Usuário"
             type="text"
             required
             value={formData.username}
@@ -91,7 +91,7 @@ export default function Login() {
           {/* Campo de password */}
           <div className="relative">
             <Input
-              label="Password"
+              label="Senha"
               type={showPassword ? 'text' : 'password'}
               required
               value={formData.password}
@@ -115,18 +115,18 @@ export default function Login() {
 
           {/* Botão de login com indicador de carregamento */}
           <Button type="submit" disabled={loading}>
-            {loading ? <Spinner /> : 'Sign In'}
+            {loading ? <Spinner /> : 'Entrar'}
           </Button>
         </form>
 
         {/* Link para a página de cadastro */}
         <p className="mt-6 text-center text-sm text-gray-800">
-          New adventurer?{' '}
+          Novo aventureiro?{' '}
           <Link
             to="/register"
             className="text-indigo-300 hover:text-indigo-200 transition-colors font-medium"
           >
-            Sign Up
+            Crie sua conta!
           </Link>
         </p>
       </div>

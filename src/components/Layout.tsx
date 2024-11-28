@@ -16,7 +16,7 @@ import {
 import { useAuthStore } from '../store/authStore';
 import { ExperienceBar } from './ExperienceBar';
 import { cn } from '../lib/utils';
-import { SocialButtons } from './SocialButtons';
+import { FriendsList } from './FriendsList';
 
 interface LayoutProps {
   children: ReactNode;
@@ -170,8 +170,7 @@ export function Layout({ children }: LayoutProps) {
           <div className="p-8">{children}</div>
         </main>
 
-        {/* Social Buttons */}
-        <SocialButtons />
+        <FriendsList />
       </div>
   );
 }
