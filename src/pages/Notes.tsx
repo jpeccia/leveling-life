@@ -18,6 +18,8 @@ import {
   Search,
 } from 'lucide-react';
 import api from '../lib/axios';
+import { toast } from 'sonner';
+
 
 interface Note {
   id: string;
@@ -31,13 +33,13 @@ export default function Notes() {
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Editor setup
+  // Configuração do editor
   const editor = useEditor({
     extensions: [
       StarterKit,
       Highlight,
       Placeholder.configure({
-        placeholder: 'Start writing your note...',
+        placeholder: 'Comece a escrever sua nota...',
       }),
     ],
     content: selectedNote?.content || '',
@@ -62,20 +64,20 @@ export default function Notes() {
         const response = await api.get('/notes');
         setNotes(response.data);
       } catch (error) {
-        console.error('Failed to fetch notes', error);
+        console.error('Erro ao buscar notas', error);
       }
     }
     fetchNotes();
-  }, []); // Executa apenas uma vez após a montagem do componente
+  }, []);
 
   // Criar uma nova nota
   const createNote = async () => {
     const token = localStorage.getItem('token'); // Supondo que o token esteja no localStorage
     const newNote: Omit<Note, 'id' | 'updatedAt'> = {
-      title: 'Untitled Note',
+      title: 'Nota sem título',
       content: '',
     };
-  
+
     try {
       const response = await api.post('/notes', newNote, {
         headers: {
@@ -86,11 +88,11 @@ export default function Notes() {
       setSelectedNote(response.data);
       editor?.commands.setContent('');
     } catch (error) {
-      console.error('Failed to create note', error);
+      console.error('Erro ao criar a nota', error);
       if (error.response?.status === 403) {
-        alert('Você não tem permissão para criar notas.');
+        toast.error('Você não tem permissão para criar notas.');
       } else {
-        alert('Ocorreu um erro na criação da nota.');
+        toast.error('Ocorreu um erro ao criar a nota.');
       }
     }
   };
@@ -107,8 +109,8 @@ export default function Notes() {
       setNotes(notes.map((note) => (note.id === updatedNote.id ? response.data : note)));
       setSelectedNote(response.data);
     } catch (error) {
-      console.error('Failed to update note', error);
-      alert('Erro ao atualizar a nota.');
+      console.error('Erro ao atualizar a nota', error);
+      toast.error('Erro ao atualizar a nota.');
     }
   };
 
@@ -127,8 +129,8 @@ export default function Notes() {
         editor?.commands.setContent('');
       }
     } catch (error) {
-      console.error('Failed to delete note', error);
-      alert('Erro ao deletar a nota.');
+      console.error('Erro ao deletar a nota', error);
+      toast.error('Erro ao deletar a nota.');
     }
   };
 
@@ -142,7 +144,7 @@ export default function Notes() {
   const formatDate = (date: any) => {
     const validDate = new Date(date);
     if (isNaN(validDate.getTime())) {
-      return 'Invalid date';
+      return 'Data inválida';
     }
     return new Intl.DateTimeFormat('pt-BR', {
       month: 'short',
@@ -157,13 +159,13 @@ export default function Notes() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <div className="grid grid-cols-12 divide-x divide-gray-100 h-[calc(100vh-12rem)]">
-            {/* Sidebar */}
+            {/* Barra lateral */}
             <div className="col-span-3 flex flex-col">
               <div className="p-4 border-b border-gray-100">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-2">
                     <FileText className="h-5 w-5 text-indigo-600" />
-                    <h2 className="font-semibold text-gray-900">Notes</h2>
+                    <h2 className="font-semibold text-gray-900">Notas</h2>
                   </div>
                   <button
                     onClick={createNote}
@@ -175,7 +177,7 @@ export default function Notes() {
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Search notes..."
+                    placeholder="Buscar notas..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
@@ -237,7 +239,7 @@ export default function Notes() {
                         })
                       }
                       className="w-full px-3 py-2 text-lg font-medium border-0 focus:ring-0 focus:outline-none"
-                      placeholder="Note title"
+                      placeholder="Título da nota"
                     />
                     <div className="flex items-center space-x-2 mt-2">
                       <button
@@ -285,7 +287,9 @@ export default function Notes() {
                         <ListOrdered className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => editor?.chain().focus().toggleBlockquote().run()}
+                        onClick={() =>
+                          editor?.chain().focus().toggleBlockquote().run()
+                        }
                         className={`p-1.5 rounded ${
                           editor?.isActive('blockquote')
                             ? 'bg-gray-100 text-gray-900'
@@ -294,17 +298,27 @@ export default function Notes() {
                       >
                         <Quote className="h-4 w-4" />
                       </button>
+                      <button
+                        onClick={() => editor?.chain().focus().undo().run()}
+                        className="p-1.5 text-gray-500 hover:bg-gray-100 rounded transition-colors"
+                      >
+                        <Undo className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => editor?.chain().focus().redo().run()}
+                        className="p-1.5 text-gray-500 hover:bg-gray-100 rounded transition-colors"
+                      >
+                        <Redo className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
-
-                  {/* Editor Content */}
-                  <div className="flex-1 p-4 overflow-y-auto">
+                  <div className="flex-1 overflow-y-auto">
                     <EditorContent editor={editor} />
                   </div>
                 </>
               ) : (
-                <div className="flex justify-center items-center h-full">
-                  <p className="text-gray-500">Select or create a note</p>
+                <div className="flex items-center justify-center flex-1 text-gray-500">
+                  Selecione ou crie uma nota para começar a editar.
                 </div>
               )}
             </div>

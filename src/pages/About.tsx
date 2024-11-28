@@ -36,28 +36,28 @@ export default function About() {
   // Lista de recursos e funcionalidades do projeto.
   const features = [
     {
-      title: 'Quest System',
-      description: 'Create and manage daily, weekly, and monthly quests to track your progress and achievements.',
+      title: 'Sistema de Quests',
+      description: 'Crie e gerencie quests diárias, semanais e mensais para acompanhar seu progresso e conquistas.',
     },
     {
-      title: 'Experience Points',
-      description: 'Earn XP by completing quests and level up to unlock new titles and achievements.',
+      title: 'Pontos de Experiência',
+      description: 'Ganhe XP ao completar quests e suba de nível para desbloquear novos títulos e conquistas.',
     },
     {
-      title: 'Social Features',
-      description: 'Connect with friends, compare progress, and compete on the global leaderboard.',
+      title: 'Funcionalidades Sociais',
+      description: 'Conecte-se com amigos, compare progresso e compita no ranking global.',
     },
     {
-      title: 'Calendar Integration',
-      description: 'Visualize your quest schedule and plan your achievements with our intuitive calendar.',
+      title: 'Integração com Calendário',
+      description: 'Visualize seu cronograma de quests e planeje suas conquistas com nosso calendário intuitivo.',
     },
     {
-      title: 'Notes System',
-      description: 'Keep track of important thoughts, reminders, and ideas with an integrated note-taking system.',
+      title: 'Sistema de Notas',
+      description: 'Registre pensamentos importantes, lembretes e ideias com um sistema integrado de anotações.',
     },
     {
-      title: 'Spreadsheet Integration',
-      description: 'Organize your tasks and quests in a spreadsheet-like format, allowing for better management and tracking.',
+      title: 'Integração com Planilhas',
+      description: 'Organize suas tarefas e quests em um formato de planilha, permitindo melhor gerenciamento e acompanhamento.',
     },
   ];
 
@@ -65,22 +65,23 @@ export default function About() {
     <Layout>
       <div className="max-w-4xl mx-auto px-4">
         <div className="space-y-12">
-          {/* Hero Section */}
+          {/* Seção Principal */}
           <div className="text-center">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              About Leveling Life
+              Sobre o Leveling Life
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              A gamified productivity app that turns your daily tasks into epic quests,
-              helping you level up in real life while having fun.
+              Um aplicativo de produtividade gamificado que transforma suas tarefas
+              diárias em quests épicas, ajudando você a subir de nível na vida real
+              enquanto se diverte.
             </p>
           </div>
 
-          {/* Features Grid */}
+          {/* Grid de Funcionalidades */}
           <div className="grid md:grid-cols-2 gap-8">
             {features.map((feature, index) => (
               <div
-                key={feature.title} // Uso de uma chave única e descritiva
+                key={feature.title}
                 className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow"
               >
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -91,7 +92,7 @@ export default function About() {
             ))}
           </div>
 
-          {/* Creator Section */}
+          {/* Seção do Criador */}
           <div className="bg-white rounded-xl shadow-sm overflow-hidden">
             <div className="p-8">
               <div className="text-center mb-8">
@@ -101,24 +102,23 @@ export default function About() {
                   className="w-32 h-32 rounded-full mx-auto mb-4 object-cover"
                 />
                 <h2 className="text-2xl font-bold text-gray-900">João Peccia</h2>
-                <p className="text-gray-600">Back End Developer</p>
+                <p className="text-gray-600">Desenvolvedor Back-End</p>
               </div>
 
               <div className="max-w-2xl mx-auto text-center">
                 <p className="text-gray-600 mb-6">
-                  Passionate about creating tools that make people's lives better
-                  and more enjoyable. Leveling Life was born from the idea of combining
-                  productivity with gaming elements to create a unique and engaging
-                  experience.
+                  Apaixonado por criar ferramentas que tornam a vida das pessoas melhor
+                  e mais agradável. O Leveling Life nasceu da ideia de combinar
+                  produtividade com elementos de jogos para criar uma experiência única e envolvente.
                 </p>
 
                 {/* Redes sociais com links seguros */}
                 <div className="flex justify-center space-x-4">
                   {socialLinks.map((link) => {
-                    const Icon = link.icon; // Desestruturação do ícone
+                    const Icon = link.icon;
                     return (
                       <a
-                        key={link.href} // Uso de chave única para cada link
+                        key={link.href}
                         href={link.href}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -134,10 +134,10 @@ export default function About() {
             </div>
           </div>
 
-          {/* Footer */}
+          {/* Rodapé */}
           <div className="text-center py-8">
             <p className="flex items-center justify-center text-gray-600">
-              Made with <Heart className="h-4 w-4 mx-1 text-red-500" /> by João Peccia
+              Feito com <Heart className="h-4 w-4 mx-1 text-red-500" /> por João Peccia
             </p>
           </div>
         </div>

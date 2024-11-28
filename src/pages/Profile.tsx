@@ -32,16 +32,16 @@ export type User = {
 };
 
 export default function Profile() {
-  const { user, setUser } = useAuthStore((state) => ({
+  const { user, setUser, fetchUser } = useAuthStore((state) => ({
     user: state.user,
     setUser: state.setUser,
+    fetchUser: state.fetchUser,
   }));
 
   const [editMode, setEditMode] = useState<EditMode>(null);
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    level: user?.level || 1,
     newEmail: '',
     currentPassword: '',
     profilePicture: user?.profilePicture || '',
@@ -51,11 +51,10 @@ export default function Profile() {
     newPassword: '',
     confirmPassword: '',
   });
-  const [tempProfilePicture, setTempProfilePicture] = useState<string | null>(null);  // Mudado para string
+  const [tempProfilePicture, setTempProfilePicture] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { fetchUser } = useAuthStore();
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -66,80 +65,51 @@ export default function Profile() {
     }
   }, [setUser]);
 
-  const calculateXpForNextLevel = (level: number) => {
-    return level * 800; // Exemplo: cada nível requer 800 XP a mais
-  };
+  const calculateXpForNextLevel = (level: number) => level * 800;
 
   const nextLevelXp = calculateXpForNextLevel(user?.level || 1);
 
-  // Função para tratar a mudança da URL da imagem
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const url = e.target.value;
-    setTempProfilePicture(url);
+    setTempProfilePicture(e.target.value);
   };
 
-  const isImageUrl = (url) => {
-    const imageExtensions = /\.(jpg|jpeg|png|gif|bmp|webp)$/i;
-    return imageExtensions.test(url);
-  };
+  const isImageUrl = (url: string) => /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(url);
 
-  const isValidUrl = (url) => {
+  const isValidUrl = (url: string) => {
     try {
-      new URL(url); // Tenta criar um objeto URL. Se falhar, não é uma URL válida.
+      new URL(url);
       return true;
-    } catch (err) {
+    } catch {
       return false;
     }
   };
 
-
   const handleSavePhoto = async () => {
-
-    // Obter o nível do usuário (supondo que você tenha essa informação disponível em algum lugar)
-    const userLevel = profileData.level; 
     if (!tempProfilePicture) return;
-  
-    // Verificar se a URL é válida
-    if (!isValidUrl(tempProfilePicture)) {
-      toast.error('A URL da foto de perfil não é válida.');
-      return;
-    }
-  
-    // Verificar se a URL é de uma imagem
-    if (!isImageUrl(tempProfilePicture)) {
-      toast.error('A URL não é de uma imagem válida.');
+
+    if (!isValidUrl(tempProfilePicture) || !isImageUrl(tempProfilePicture)) {
+      toast.error('URL invalida.');
       return;
     }
 
-      // Permitir GIFs somente após o nível 50
-  if (tempProfilePicture.endsWith('.gif') && userLevel < 50) {
-    toast.error('Você precisa estar no nível 50 ou superior para usar GIFs como foto de perfil.');
-    return;
-  }
-  
-  
+    if (tempProfilePicture.endsWith('.gif') && user?.level < 50) {
+      toast.error('GIFs só são permitidos a partir do nivel 50.');
+      return;
+    }
+
     setLoading(true);
     try {
-      const response = await api.post('/user/update', 
+      const response = await api.post(
+        '/user/update',
         { profilePicture: tempProfilePicture },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` } }
       );
-  
-      console.log('Resposta da API:', response.data);
-  
-      setProfileData((prev) => ({
-        ...prev,
-        profilePicture: response.data.profilePicture,
-      }));
-      await fetchUser(); // Recarrega os dados do usuário
+
+      setProfileData((prev) => ({ ...prev, profilePicture: response.data.profilePicture }));
+      await fetchUser();
       toast.success('Foto de perfil atualizada com sucesso!');
-    } catch (err) {
-      console.error('Erro na requisição:', err);
-      setError('Falha ao atualizar a foto de perfil.');
+    } catch (error) {
+      console.error('Error updating profile picture:', error);
       toast.error('Falha ao atualizar a foto de perfil.');
     } finally {
       setLoading(false);
@@ -148,65 +118,32 @@ export default function Profile() {
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setError('');
 
-    const token = localStorage.getItem('authToken');
-
-    if (!token) {
-      setError('Authentication token not found.');
+    if (!profileData.name.trim()) {
+      toast.error('Nome não pode ser vázio.');
       return;
     }
 
-    if (profileData.currentPassword) {
-      try {
-        const passwordCheckResponse = await api.post(
-          '/user/check-password',
-          { currentPassword: profileData.currentPassword },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (passwordCheckResponse.status !== 200) {
-          setError('Incorrect current password');
-          return;
-        }
-      } catch (err) {
-        setError('Error checking current password');
-        console.error('Erro ao verificar a senha atual:', err);
-        return;
-      }
-    }
-
-    const updatedData: any = {
-      name: profileData.name,
-      currentPassword: profileData.currentPassword,
-    };
-
-    if (profileData.newEmail && profileData.newEmail.trim() !== "") {
-      updatedData.newEmail = profileData.newEmail;
-    }
-
     try {
-      const response = await api.post('/user/update', updatedData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const response = await api.post(
+        '/user/update',
+        {
+          name: profileData.name,
+          newEmail: profileData.newEmail.trim(),
+          currentPassword: profileData.currentPassword,
         },
-      });
+        { headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` } }
+      );
 
       if (response.status === 200) {
-        const { fetchUser } = useAuthStore.getState();
         await fetchUser();
         setEditMode(null);
-        toast.success('Profile updated successfully!');
-      } else {
-        setError(`Error updating profile: ${response.data.message || 'Desconhecido'}`);
+        toast.success('Perfil atualizado com sucesso!');
       }
-    } catch (err: any) {
-      console.error('Error updating profile:', err);
-      setError(err.response?.data?.message || 'Failed to update profile');
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      toast.error(error.response?.data?.message || 'Falha ao atualizar o perfil.');
     }
   };
 
@@ -214,50 +151,26 @@ export default function Profile() {
     e.preventDefault();
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setError('Passwords do not match');
+      toast.error('As senhas não coincidem.');
       return;
     }
 
     if (!passwordData.currentPassword) {
-      setError('Current password is required');
+      toast.error('A senha atual é obrigatória.');
       return;
     }
 
     try {
-      const passwordCheckResponse = await api.post(
-        '/user/check-password',
-        { currentPassword: passwordData.currentPassword },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
-          },
-        }
-      );
-
-      if (passwordCheckResponse.status !== 200) {
-        setError('Incorrect current password');
-        return;
-      }
-
-      await api.post('/user/update', {
-        currentPassword: passwordData.currentPassword,
-        newPassword: passwordData.newPassword,
-      });
-
+      await api.post('/user/check-password', { currentPassword: passwordData.currentPassword });
+      await api.post('/user/update', passwordData);
       setEditMode(null);
-      setError('');
-      setPasswordData({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: '',
-      });
-      toast.success("Password changed successfully!");
-    } catch (err) {
-      setError('Failed to update password');
-      console.error(err);
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      toast.success('Senha atualizada com sucesso!');
+    } catch (error) {
+      console.error('Error updating password:', error);
+      toast.error('Falha ao atualizar a senha.');
     }
   };
-
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4">
@@ -349,13 +262,13 @@ export default function Profile() {
                         className="flex items-center justify-center space-x-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
                       >
                         <Edit2 className="h-4 w-4" />
-                        <span>Edit Profile</span>
+                        <span>Editar perfil</span>
                       </Button>
                       <Button 
                       onClick={() => setEditMode('password')} 
                       className="flex items-center justify-center space-x-2">
                     <Key className="h-4 w-4" />
-                    <span>Change Password</span>
+                    <span>Mudar senha</span>
                   </Button>
 
                     </div>
@@ -371,7 +284,7 @@ export default function Profile() {
                   )}
                   <div className="space-y-4">
                     <Input
-                      label="Name"
+                      label="Nome"
                       type="text"
                       value={profileData.name}
                       onChange={(e) =>
@@ -385,7 +298,7 @@ export default function Profile() {
                       readOnly
                     />
                     <Input
-                      label="New Email"
+                      label="Novo Email"
                       type="email"
                       value={profileData.newEmail}
                       onChange={(e) =>
@@ -393,7 +306,7 @@ export default function Profile() {
                       }
                     />
                     <Input
-                      label="Password"
+                      label="Senha"
                       type="password"
                       value={profileData.currentPassword}
                       onChange={(e) =>
@@ -402,14 +315,14 @@ export default function Profile() {
                     />
                     <div className="flex space-x-4">
                       <Button type="submit" className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700">
-                        Save Changes
+                        Salvar alterações
                       </Button>
                       <Button
                         type="button"
                         variant="secondary"
                         onClick={() => setEditMode(null)}
                       >
-                        Cancel
+                        Cancelar
                       </Button>
                     </div>
                   </div>
@@ -424,7 +337,7 @@ export default function Profile() {
                   )}
                   <div className="space-y-4">
                     <Input
-                      label="Current Password"
+                      label="Senha atual"
                       type="password"
                       value={passwordData.currentPassword}
                       onChange={(e) =>
@@ -433,7 +346,7 @@ export default function Profile() {
                       required
                     />
                     <Input
-                      label="New Password"
+                      label="Nova senha"
                       type="password"
                       value={passwordData.newPassword}
                       onChange={(e) =>
@@ -442,7 +355,7 @@ export default function Profile() {
                       required
                     />
                     <Input
-                      label="Confirm New Password"
+                      label="Confirmar nova senha"
                       type="password"
                       value={passwordData.confirmPassword}
                       onChange={(e) =>
@@ -452,14 +365,14 @@ export default function Profile() {
                     />
                     <div className="flex space-x-4">
                       <Button type="submit" className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700">
-                        Update Password
+                        Atualizar senha
                       </Button>
                       <Button
                         type="button"
                         variant="secondary"
                         onClick={() => setEditMode(null)}
                       >
-                        Cancel
+                        Cancelar
                       </Button>
                     </div>
                   </div>

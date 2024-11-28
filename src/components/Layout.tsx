@@ -16,6 +16,7 @@ import {
 import { useAuthStore } from '../store/authStore';
 import { ExperienceBar } from './ExperienceBar';
 import { cn } from '../lib/utils';
+import { SocialButtons } from './SocialButtons';
 
 interface LayoutProps {
   children: ReactNode;
@@ -168,6 +169,9 @@ export function Layout({ children }: LayoutProps) {
         <main className="flex-1 overflow-auto bg-gray-50 rounded-r-lg transition-all duration-300 ease-in-out">
           <div className="p-8">{children}</div>
         </main>
+
+        {/* Social Buttons */}
+        <SocialButtons />
       </div>
   );
 }

@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { FriendsList } from '../components/FriendsList';
 import api from '../lib/axios';
 import { MiniCalendar } from '../components/MiniCalendar';
-import { FileSpreadsheet, FileText, PlusCircle, Shield, Sparkles, Sword, Wand2 } from 'lucide-react';
+import { FileSpreadsheet, NotebookPenIcon, PlusCircle, Shield, Sparkles, Sword, Wand2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '../store/authStore';
 import { Dialog } from '@headlessui/react';  // Importando o Dialog para os modais
@@ -57,7 +57,7 @@ export default function Dashboard() {
       setQuests(response.data);
     } catch (error) {
       console.error('Failed to load quests:', error);
-      toast.error('Failed to load quests. Please try again later.');
+      toast.error('Falha ao carregar suas missões. Por favor, tente novamente.');
     }
   };
 
@@ -67,8 +67,8 @@ export default function Dashboard() {
       setProfileData(response.data);
     } catch (error) {
       console.error('Failed to load profile:', error);
-      toast.error('Failed to load profile. Please try again later.');
-      setError('Failed to load profile. Please try again later.');
+      toast.error('Falha ao carregar seu perfil. Por favor, tente novamente.');
+      setError('Falha ao carregar seu perfil. Por favor, tente novamente.');
     }
   };
 
@@ -78,12 +78,12 @@ export default function Dashboard() {
     try {
       await api.put(`/quests/${selectedQuest.id}/complete`);
       await fetchUser();  // Recarrega os dados do usuário após completar a quest
-      toast.success('Quest completed successfully!');
+      toast.success('Missão completada com sucesso!');
       setShowCompleteModal(false);
       loadQuests();
     } catch (error) {
       console.error('Failed to complete quest:', error);
-      toast.error('Failed to complete quest. Please try again later.');
+      toast.error('Falha ao completar a missão. Por favor, tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -95,11 +95,11 @@ export default function Dashboard() {
     try {
       await api.delete(`/quests/${selectedQuest.id}`);
       setQuests((prevQuests) => prevQuests.filter((quest) => quest.id !== selectedQuest.id));
-      toast.success('Quest deleted successfully!');
+      toast.success('Missão removida com sucesso.!');
       setShowDeleteModal(false);
     } catch (error) {
       console.error('Failed to delete quest:', error);
-      toast.error('Failed to delete quest. Please try again later.');
+      toast.error('Falha ao remover missão. Por favor, tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -150,9 +150,9 @@ export default function Dashboard() {
 
   // Função para agrupar as quests por tipo
   const groupedQuests = {
-    daily: quests.filter((q) => q.type === 'DAILY'),
-    weekly: quests.filter((q) => q.type === 'WEEKLY'),
-    monthly: quests.filter((q) => q.type === 'MONTHLY'),
+    diaria: quests.filter((q) => q.type === 'DAILY'),
+    semanal: quests.filter((q) => q.type === 'WEEKLY'),
+    mensal: quests.filter((q) => q.type === 'MONTHLY'),
   };
 
   return (
@@ -172,16 +172,16 @@ export default function Dashboard() {
                     <div className="flex items-center space-x-3">
                       <div
                         className={`p-2 ${
-                          type === "daily"
+                          type === "diaria"
                             ? "bg-gradient-to-br from-blue-500 to-blue-600"
-                            : type === "weekly"
+                            : type === "semanal"
                             ? "bg-gradient-to-br from-purple-500 to-purple-600"
                             : "bg-gradient-to-br from-amber-500 to-amber-600"
                         } rounded-lg shadow-md`}
                       >
-                        {type === "daily" && <Sword className="h-5 w-5 text-white" />}
-                        {type === "weekly" && <Shield className="h-5 w-5 text-white" />}
-                        {type === "monthly" && <Wand2 className="h-5 w-5 text-white" />}
+                        {type === "diaria" && <Sword className="h-5 w-5 text-white" />}
+                        {type === "semanal" && <Shield className="h-5 w-5 text-white" />}
+                        {type === "mensal" && <Wand2 className="h-5 w-5 text-white" />}
                       </div>
                       <h2 className="text-xl font-bold text-gray-900 capitalize">
                         Missão {type}
@@ -190,18 +190,18 @@ export default function Dashboard() {
                     <button
                       onClick={() => navigate("/quests/create")}
                       className={`p-2 hover:bg-${
-                        type === "daily"
+                        type === "diaria"
                           ? "blue-50"
-                          : type === "weekly"
+                          : type === "semanal"
                           ? "purple-50"
                           : "amber-50"
                       } rounded-lg transition-colors group`}
                     >
                       <PlusCircle
                         className={`h-5 w-5 ${
-                          type === "daily"
+                          type === "diaria"
                             ? "text-blue-500 group-hover:text-blue-600"
-                            : type === "weekly"
+                            : type === "semanal"
                             ? "text-purple-500 group-hover:text-purple-600"
                             : "text-amber-500 group-hover:text-amber-600"
                         }`}
@@ -235,7 +235,7 @@ export default function Dashboard() {
                               : "text-amber-200"
                           } mx-auto mb-4`}
                         />
-                        <p className="text-gray-500">No {type} quests available</p>
+                        <p className="text-gray-500">Sem missão {type} disponivel</p>
                       </div>
                     )}
                   </div>
@@ -248,22 +248,22 @@ export default function Dashboard() {
   
           {/* Right Sidebar */}
           <div className="space-y-6">
-                        {/* Quick Access */}
-                        <div className="bg-white rounded-2xl shadow-xl p-6 border border-indigo-100">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Atalho</h2>
+            {/* Quick Access */}
+            <div className="bg-white rounded-2xl shadow-xl p-6 border border-indigo-100">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Atalhos</h2>
               <div className="grid grid-cols-2 gap-4">
                 <button
                   onClick={() => navigate('/spreadsheet')}
                   className="p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-100 hover:shadow-md transition-shadow group"
                 >
                   <FileSpreadsheet className="h-6 w-6 text-indigo-600 mx-auto mb-2" />
-                  <span className="text-sm text-gray-600 group-hover:text-indigo-600">Inventário</span>
+                  <span className="text-sm text-gray-600 group-hover:text-indigo-600">Planilhas</span>
                 </button>
                 <button
                   onClick={() => navigate('/notes')}
                   className="p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-100 hover:shadow-md transition-shadow group"
                 >
-                  <FileText className="h-6 w-6 text-indigo-600 mx-auto mb-2" />
+                  <NotebookPenIcon className="h-6 w-6 text-indigo-600 mx-auto mb-2" />
                   <span className="text-sm text-gray-600 group-hover:text-indigo-600">Notas</span>
                 </button>
               </div>
@@ -281,8 +281,8 @@ export default function Dashboard() {
         <Dialog open={showCompleteModal} onClose={() => setShowCompleteModal(false)}>
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
             <div className="bg-white p-6 rounded-lg shadow-lg">
-              <h3 className="text-lg font-semibold">Complete Quest</h3>
-              <p>Are you sure you want to complete this quest?</p>
+              <h3 className="text-lg font-semibold">Completar Missão</h3>
+              <p>Você tem certeza que quer completar essa missão?</p>
               <div className="mt-4 flex justify-end">
                 <button
                   onClick={() => setShowCompleteModal(false)}
@@ -294,7 +294,7 @@ export default function Dashboard() {
                   onClick={handleCompleteQuest}
                   className="px-4 py-2 bg-indigo-600 text-white rounded-lg"
                 >
-                  {loading ? <Spinner /> : 'Complete Quest'}
+                  {loading ? <Spinner /> : 'Completar'}
                 </button>
               </div>
             </div>
@@ -305,20 +305,20 @@ export default function Dashboard() {
         <Dialog open={showDeleteModal} onClose={() => setShowDeleteModal(false)}>
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
             <div className="bg-white p-6 rounded-lg shadow-lg">
-              <h3 className="text-lg font-semibold">Delete Quest</h3>
-              <p>Are you sure you want to delete this quest?</p>
+              <h3 className="text-lg font-semibold">Deletar Missão</h3>
+              <p>Você tem certeza que quer deletar essa missão?</p>
               <div className="mt-4 flex justify-end">
                 <button
                   onClick={() => setShowDeleteModal(false)}
                   className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg mr-2"
                 >
-                  Cancel
+                  Cancelar
                 </button>
                 <button
                   onClick={handleDeleteQuest}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg"
                 >
-                  {loading ? <Spinner /> : 'Delete Quest'}
+                  {loading ? <Spinner /> : 'Deletar'}
                 </button>
               </div>
             </div>
@@ -329,10 +329,10 @@ export default function Dashboard() {
         <Dialog open={showEditModal} onClose={() => setShowEditModal(false)}>
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
             <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg">
-              <h3 className="text-lg font-semibold">Edit Quest</h3>
+              <h3 className="text-lg font-semibold">Editar Missão</h3>
               <div className="mt-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Title</label>
+                  <label className="block text-sm font-medium text-gray-700">Titulo</label>
                   <input
                     type="text"
                     value={editQuestData?.title || ''}
@@ -341,7 +341,7 @@ export default function Dashboard() {
                   />
                 </div>
                 <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700">Description</label>
+                  <label className="block text-sm font-medium text-gray-700">Descrição</label>
                   <textarea
                     value={editQuestData?.description || ''}
                     onChange={(e) => setEditQuestData((prev) => ({ ...prev, description: e.target.value }))}
@@ -349,15 +349,15 @@ export default function Dashboard() {
                   />
                 </div>
                 <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700">Type</label>
+                  <label className="block text-sm font-medium text-gray-700">Tipo</label>
                   <select
                     value={editQuestData?.type || 'DAILY'}
                     onChange={(e) => setEditQuestData((prev) => ({ ...prev, type: e.target.value as 'DAILY' | 'WEEKLY' | 'MONTHLY' }))}
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
                   >
-                    <option value="DAILY">Daily</option>
-                    <option value="WEEKLY">Weekly</option>
-                    <option value="MONTHLY">Monthly</option>
+                    <option value="DAILY">Diária</option>
+                    <option value="WEEKLY">Semanal</option>
+                    <option value="MONTHLY">Mensal</option>
                   </select>
                 </div>
                 <div className="mt-4 flex justify-end">
@@ -371,7 +371,7 @@ export default function Dashboard() {
                     onClick={handleSaveChanges}
                     className="px-4 py-2 bg-indigo-600 text-white rounded-lg"
                   >
-                    {loading ? <Spinner /> : 'Save Changes'}
+                    {loading ? <Spinner /> : 'Salvar alterações'}
                   </button>
                 </div>
               </div>

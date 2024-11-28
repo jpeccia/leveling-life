@@ -4,6 +4,7 @@ import { Trophy, Medal, User, Crown, Shield, Scroll, Sparkles } from 'lucide-rea
 import { ExperienceBar } from '../components/ExperienceBar';
 import api from '../lib/axios';
 import { useAuthStore } from '../store/authStore';
+import { toast } from 'sonner';
 
 interface RankedUser {
   id: string;
@@ -59,7 +60,7 @@ export default function Ranking() {
         <div className="bg-white rounded-2xl shadow-sm p-8">
           <div className="flex items-center space-x-4 mb-8">
             <Trophy className="h-8 w-8 text-indigo-600" />
-            <h1 className="text-2xl font-bold text-gray-900">Hall of Fame</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Ranking</h1>
           </div>
           
           <div className="grid md:grid-cols-2 gap-6">
@@ -162,28 +163,28 @@ export default function Ranking() {
                     
                     if (!user) {
                       console.error('User not found in store.');
-                      alert('User not found.');
+                      toast.error('Usuário não encontrado.');
                       return;
                     }
 
                     // Verifica se o usuário logado é o mesmo que o selecionado
                     if (user.username === selectedUser.username) {
-                      alert('You cannot send a friend request to yourself.');
+                      toast.error('Você não pode enviar pedido de amizade pra você mesmo.');
                       return;
                     }
 
                     // Se não for o mesmo usuário, envia o pedido de amizade
                     await api.post(`/friends/add/${selectedUser.username}`);
-                    alert('Friend request sent successfully!');
+                    toast.success('Pedido de amizade enviado com sucesso!');
                   } catch (error) {
                     console.error('Failed to send friend request:', error);
-                    alert('Failed to send friend request.');
+                    toast.error('Falha ao enviar pedido de amizade.');
                   }
                 }}
                 className="mt-4 flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300"
               >
                 <User className="h-5 w-5" />
-                <span>Send Friend Request</span>
+                <span>Mandar pedido de amizade</span>
               </button>
              </div>
             </div>
@@ -191,7 +192,7 @@ export default function Ranking() {
         ) : (
               <div className="bg-gray-50 p-6 rounded-lg flex flex-col items-center justify-center text-gray-500">
                 <User className="h-12 w-12 mb-2" />
-                <p>Select a user to view their details</p>
+                <p>Selecione um usuário para ver o seu perfil</p>
               </div>
             )}
           </div>

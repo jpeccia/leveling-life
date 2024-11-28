@@ -36,7 +36,7 @@ export default function Calendar() {
       });
       setQuests(response.data);
     } catch (error) {
-      console.error('Failed to load quests:', error);
+      console.error('Erro ao carregar quests:', error);
     }
   };
 
@@ -59,10 +59,10 @@ export default function Calendar() {
   // Função para configurar o ícone e as cores de acordo com o tipo de quest
   const getQuestTypeConfig = (type: string) => {
     switch (type) {
-      case 'DAILY': return { icon: Sword, color: 'bg-blue-400', label: 'Daily Quest' };
-      case 'WEEKLY': return { icon: Shield, color: 'bg-purple-400', label: 'Weekly Mission' };
-      case 'MONTHLY': return { icon: Wand2, color: 'bg-amber-400', label: 'Epic Quest' };
-      default: return { icon: Scroll, color: 'bg-gray-400', label: 'Quest' };
+      case 'DAILY': return { icon: Sword, color: 'bg-blue-400', label: 'Diária' };
+      case 'WEEKLY': return { icon: Shield, color: 'bg-purple-400', label: 'Semanal' };
+      case 'MONTHLY': return { icon: Wand2, color: 'bg-amber-400', label: 'Mensal' };
+      default: return { icon: Scroll, color: 'bg-gray-400', label: 'Missão' };
     }
   };
 
@@ -70,7 +70,7 @@ export default function Calendar() {
   const renderCalendar = () => {
     const daysInMonth = getDaysInMonth(currentDate);
     const firstDay = getFirstDayOfMonth(currentDate);
-    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
     // Array para armazenar os dias do calendário
     const days = Array.from({ length: firstDay }, (_, i) => (
@@ -108,7 +108,7 @@ export default function Calendar() {
             })}
           </div>
           {!hasQuests && (
-            <div className="mt-1 text-xs text-gray-500 text-center italic">No quests</div>
+            <div className="mt-1 text-xs text-gray-500 text-center italic">Sem missões</div>
           )}
         </div>
       );
@@ -137,7 +137,7 @@ export default function Calendar() {
           </div>
 
           <div className="flex justify-end mt-4 space-x-3">
-            {['Daily', 'Weekly', 'Epic'].map((label, index) => {
+            {['Diária', 'Semanal', 'Mensal'].map((label, index) => {
               const icons = [<Sword className="w-4 h-4 text-blue-400" />, <Shield className="w-4 h-4 text-purple-400" />, <Wand2 className="w-4 h-4 text-amber-400" />];
               return (
                 <div key={index} className="flex items-center space-x-2">
@@ -150,7 +150,7 @@ export default function Calendar() {
         </div>
 
         <div className="grid grid-cols-7 bg-gray-50/50 border-b border-gray-100">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+          {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
             <div key={day} className="text-center py-2 text-sm font-medium text-gray-600">
               {day}
             </div>

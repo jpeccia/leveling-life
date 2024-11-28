@@ -5,15 +5,13 @@ import {
   Upload,
   Download,
   Plus,
-  MinusCircle, // Ícone para remover
+  MinusCircle,
   AlertCircle,
   CheckCircle,
 } from 'lucide-react';
-import ExcelJS from 'exceljs'; // Importe o ExcelJS
+import ExcelJS from 'exceljs';
 import {
   createColumnHelper,
-  getCoreRowModel,
-  useReactTable,
 } from '@tanstack/react-table';
 
 interface SpreadsheetData {
@@ -24,8 +22,8 @@ export default function Spreadsheet() {
   const [data, setData] = useState<SpreadsheetData[]>([]);
   const [columns, setColumns] = useState<any[]>([]);
   const [error, setError] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(false); 
-  const [importSuccess, setImportSuccess] = useState<boolean>(false); 
+  const [loading, setLoading] = useState<boolean>(false);
+  const [importSuccess, setImportSuccess] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const columnHelper = createColumnHelper<SpreadsheetData>();
 
@@ -46,9 +44,9 @@ export default function Spreadsheet() {
         const worksheet = workbook.worksheets[0];
         const jsonData: SpreadsheetData[] = [];
 
-        // Convert the worksheet rows to JSON
+        // Converter linhas da planilha em JSON
         worksheet.eachRow((row, rowIndex) => {
-          if (rowIndex === 1) return; // Skip the first row (header)
+          if (rowIndex === 1) return; // Ignorar a primeira linha (cabeçalho)
           const rowData: SpreadsheetData = {};
           row.eachCell((cell, colIndex) => {
             const columnHeader = worksheet.getRow(1).getCell(colIndex).value as string;
@@ -74,59 +72,59 @@ export default function Spreadsheet() {
           );
 
           setColumns(cols);
-
           setData(jsonData);
           setImportSuccess(true);
         }
       } catch (err) {
-        setError('Error reading spreadsheet. Please check the file format.');
+        setError('Erro ao ler a planilha. Verifique o formato do arquivo.');
       } finally {
         setLoading(false);
       }
     };
 
     reader.onerror = () => {
-      setError('Error reading file');
+      setError('Erro ao ler o arquivo.');
       setLoading(false);
     };
 
-    reader.readAsArrayBuffer(file); // Use readAsArrayBuffer para arquivos binários
+    reader.readAsArrayBuffer(file);
   };
 
   const handleExport = async () => {
     if (data.length === 0) {
-      setError('No data to export');
+      setError('Nenhum dado disponível para exportação.');
       return;
     }
 
     const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Sheet1');
+    const worksheet = workbook.addWorksheet('Planilha1');
 
-    // Adicionar colunas ao worksheet
+    // Adicionar colunas à planilha
     const columns = Object.keys(data[0]);
     worksheet.columns = columns.map((col) => ({ header: col, key: col }));
 
-    // Adicionar as linhas de dados
+    // Adicionar linhas de dados
     data.forEach((row) => {
       worksheet.addRow(row);
     });
 
     try {
-      await workbook.xlsx.writeBuffer().then((buffer) => {
-        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'exported_data.xlsx';
-        link.click();
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'dados_exportados.xlsx';
+      link.click();
     } catch (error) {
-      setError('Error exporting spreadsheet.');
+      setError('Erro ao exportar a planilha.');
     }
   };
 
   const addRow = () => {
     if (columns.length === 0) {
-      setError('Please upload a spreadsheet first or add columns');
+      setError('Adicione uma planilha ou crie colunas antes de inserir linhas.');
       return;
     }
     const newRow: SpreadsheetData = {};
@@ -137,7 +135,7 @@ export default function Spreadsheet() {
   };
 
   const addColumn = () => {
-    const columnName = `${columns.length}`;
+    const columnName = `Coluna ${columns.length + 1}`;
     const newColumn = columnHelper.accessor(columnName as any, {
       header: columnName,
       cell: (info) => info.getValue(),
@@ -153,7 +151,7 @@ export default function Spreadsheet() {
 
   const removeRow = (index: number) => {
     if (index < 0 || index >= data.length) {
-      setError('Invalid row index');
+      setError('Índice de linha inválido.');
       return;
     }
     const updatedData = data.filter((_, rowIndex) => rowIndex !== index);
@@ -162,9 +160,9 @@ export default function Spreadsheet() {
 
   const removeColumn = (columnName: string) => {
     const columnExists = columns.some((col) => col.header === columnName);
-    
+
     if (!columnExists) {
-      setError('Column not found');
+      setError('Coluna não encontrada.');
       return;
     }
 
@@ -190,11 +188,7 @@ export default function Spreadsheet() {
     setData(updatedData);
   };
 
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  });
+
 
   return (
     <Layout>
@@ -206,7 +200,7 @@ export default function Spreadsheet() {
               <div className="flex items-center space-x-3">
                 <FileSpreadsheet className="h-6 w-6 text-indigo-600" />
                 <h1 className="text-2xl font-bold text-gray-900">
-                  Spreadsheet Manager
+                  Editar Planilhas
                 </h1>
               </div>
               <div className="flex items-center space-x-3">
@@ -215,14 +209,14 @@ export default function Spreadsheet() {
                   className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
                 >
                   <Upload className="h-4 w-4" />
-                  <span>Import</span>
+                  <span>Importar</span>
                 </button>
                 <button
                   onClick={handleExport}
                   className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                 >
                   <Download className="h-4 w-4" />
-                  <span>Export</span>
+                  <span>Exportar</span>
                 </button>
                 <input
                   type="file"
@@ -240,14 +234,14 @@ export default function Spreadsheet() {
                 className="flex items-center space-x-2 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
               >
                 <Plus className="h-4 w-4" />
-                <span>Add Row</span>
+                <span>Adicionar Linha</span>
               </button>
               <button
                 onClick={addColumn}
                 className="flex items-center space-x-2 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
               >
                 <Plus className="h-4 w-4" />
-                <span>Add Column</span>
+                <span>Adicionar Coluna</span>
               </button>
             </div>
           </div>
@@ -263,7 +257,7 @@ export default function Spreadsheet() {
             {importSuccess && (
               <div className="flex items-center space-x-2 bg-green-100 p-3 rounded-lg text-green-700 mb-4">
                 <CheckCircle className="h-5 w-5" />
-                <span>Spreadsheet imported successfully!</span>
+                <span>Planilha importada com sucesso!.</span>
               </div>
             )}
             <table className="min-w-full table-auto border-collapse border border-gray-200">
@@ -273,7 +267,7 @@ export default function Spreadsheet() {
                     {columns.map((col) => (
                       <th key={col.id} className="px-4 py-2 border-b">{col.header}</th>
                     ))}
-                    <th className="px-4 py-2 border-b">Actions</th>
+                    <th className="px-4 py-2 border-b">Ações</th>
                   </tr>
                 )}
               </thead>

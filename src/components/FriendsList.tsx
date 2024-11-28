@@ -68,7 +68,7 @@ const FriendListItem = ({ friend, onRemove }: { friend: Friend; onRemove: () => 
     <button
       onClick={onRemove}
       className="text-red-600 hover:text-red-700"
-      aria-label={`Remove ${friend.name} from friends`}
+      aria-label={`Remover ${friend.name} dos amigos`}
     >
       <X className="h-5 w-5" />
     </button>
@@ -82,7 +82,6 @@ export function FriendsList() {
   const [newFriendUsername, setNewFriendUsername] = useState('');
   const [showRequests, setShowRequests] = useState(false);
   const [noRequestsMessage, setNoRequestsMessage] = useState(false);
-  const [activeChat, setActiveChat] = useState<string | null>(null);
 
   useEffect(() => {
     if (isExpanded) {
@@ -153,7 +152,7 @@ export function FriendsList() {
         {isExpanded && (
           <div className="mb-2 bg-white rounded-lg shadow-lg p-4 w-80">
             <div className="flex justify-between">
-              <h3 className="font-semibold mb-2">Friends</h3>
+              <h3 className="font-semibold mb-2">Amigos </h3>
               <button
                 onClick={handleToggleFriends}
                 className="text-gray-500 hover:text-gray-700"
