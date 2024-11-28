@@ -10,6 +10,8 @@ import {
   FileSpreadsheet,
   NotebookPenIcon,
   HomeIcon,
+  Menu,
+  X,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { ExperienceBar } from './ExperienceBar';
@@ -27,7 +29,8 @@ export function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
-  const [sidebarVisible, setSidebarVisible] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
 
   /**
    * Lida com o logout do usuário e redireciona para a página de login.
@@ -51,23 +54,37 @@ export function Layout({ children }: LayoutProps) {
     { icon: Info, label: 'Sobre', path: '/about' },
   ];
 
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
   return (
       <div className="flex min-h-screen">
-        {/* Botão de toggle para menu lateral */}
+        {/* Mobile Menu Button */}
         <button
-          onClick={() => setSidebarVisible(!sidebarVisible)}
-          className="absolute top-4 left-4 z-20 bg-white p-2 rounded-full shadow-lg lg:hidden"
-          aria-label={sidebarVisible ? 'Close Sidebar' : 'Open Sidebar'}
+          onClick={toggleSidebar}
+          className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-black/50 backdrop-blur-xl rounded-lg border border-white/20 text-white"
         >
-          {sidebarVisible ? 'Close' : 'Open'}
+          {isSidebarOpen ? (
+            <X className="h-6 w-6" />
+          ) : (
+            <Menu className="h-6 w-6" />
+          )}
         </button>
+
+          {/* Sidebar Overlay */}
+          {isSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
 
         {/* Menu lateral */}
         <aside
           className={cn(
-            "w-72 bg-gradient-to-b from-indigo-950/90 via-purple-950/90 to-indigo-950/90 backdrop-blur-xl border-r border-white/10 shadow-lg transition-transform duration-300",
-            sidebarVisible ? "translate-x-0" : "-translate-x-full",
-            "lg:translate-x-0"
+            "fixed lg:relative inset-y-0 left-0 w-72 bg-gradient-to-b from-indigo-950/90 via-purple-950/90 to-indigo-950/90 backdrop-blur-xl border-r border-white/10 shadow-[5px_0_25px_-3px] shadow-purple-500/20 z-50 transform transition-transform duration-300 ease-in-out lg:transform-none",
+            isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
           )}
         >
           <div className="p-6 border-b border-white/10">
