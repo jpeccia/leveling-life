@@ -119,31 +119,52 @@ export default function Profile() {
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
-    if (!profileData.name.trim()) {
-      toast.error('Nome não pode ser vázio.');
+  
+    const token = localStorage.getItem('authToken');
+  
+    if (!token) {
+      setError('Token de autenticação não encontrado.');
       return;
     }
-
+  
+    const updatedData: any = {
+      name: profileData.name,
+      currentPassword: profileData.currentPassword,
+    };
+  
+    if (profileData.newEmail && profileData.newEmail.trim() !== "") {
+      updatedData.newEmail = profileData.newEmail;
+    }
+  
     try {
-      const response = await api.post(
-        '/user/update',
-        {
-          name: profileData.name,
-          newEmail: profileData.newEmail.trim(),
-          currentPassword: profileData.currentPassword,
+      const response = await api.post('/user/update', updatedData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-        { headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` } }
-      );
-
+      });
+  
       if (response.status === 200) {
-        await fetchUser();
-        setEditMode(null);
-        toast.success('Perfil atualizado com sucesso!');
+        if (profileData.newEmail && profileData.newEmail.trim() !== "") {
+          // Remove o token e desloga o usuário
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('user');
+          
+          // Atualiza o estado na store
+          useAuthStore.getState().logout();
+          
+          toast.info('E-mail alterado. Por favor, entre novamente na sua conta.');
+          window.location.href = '/login'; // Redireciona para a tela de login
+        } else {
+          await fetchUser();
+          setEditMode(null);
+          toast.success('Perfil atualizado com sucesso!');
+        }
+      } else {
+        setError('Erro ao atualizar perfil');
       }
-    } catch (error: any) {
-      console.error('Error updating profile:', error);
-      toast.error(error.response?.data?.message || 'Falha ao atualizar o perfil.');
+    } catch (err) {
+      setError('Falha ao atualizar perfil');
+      console.error(err);
     }
   };
 

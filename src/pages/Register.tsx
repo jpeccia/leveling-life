@@ -126,10 +126,10 @@ export default function Register() {
             </div>
           )}
 
-          {['nome', 'usuário', 'email'].map((field) => (
+          {['name', 'username', 'email'].map((field) => (
             <div key={field}>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {field.charAt(0).toUpperCase() + field.slice(1)}
+                {field === 'name' ? 'Nome' : field === 'username' ? 'Usuário' : 'Email'}
               </label>
               <input
                 type={field === 'email' ? 'email' : 'text'}

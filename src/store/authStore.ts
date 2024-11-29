@@ -81,28 +81,57 @@ export const useAuthStore = create<AuthState>((set) => {
       try {
         const token = localStorage.getItem('authToken');
         if (!token) {
-          console.error('Token não encontrado no localStorage');
+          console.warn('Token de autenticação não encontrado no localStorage.');
+          set((state) => ({ ...state, isAuthenticated: false, user: null }));
           return;
         }
     
-        const response = await api.get('/user/', {
+        // Configuração da requisição com cabeçalhos
+        const config = {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        });
-      
+        };
+    
+        // Fazendo a requisição
+        const response = await api.get('/user/', config);
+    
+        // Verificando a resposta
         if (response.status === 200) {
           const userData = response.data;
+    
+          // Atualizando o estado global e o localStorage
           set((state) => ({
             isAuthenticated: true,
             user: { ...userData, token: state.user?.token || token },
           }));
-          localStorage.setItem('user', JSON.stringify({ ...userData, token }));
+    
+          localStorage.setItem(
+            'user',
+            JSON.stringify({ ...userData, token })
+          );
         } else {
-          console.error('Erro ao buscar perfil do usuário:', response.statusText);
+          console.error(`Erro ao buscar perfil do usuário: ${response.status} - ${response.statusText}`);
+          set((state) => ({ ...state, isAuthenticated: false, user: null }));
         }
-      } catch (error) {
-        console.error('Erro ao buscar informações do usuário:', error);
+      } catch (error: any) {
+        // Tratamento de erro
+        if (error.response) {
+          // Erros retornados pelo servidor
+          const status = error.response.status;
+          if (status === 401) {
+            console.error('Token inválido ou expirado.');
+            localStorage.removeItem('authToken');
+            set((state) => ({ ...state, isAuthenticated: false, user: null }));
+          } else if (status === 403) {
+            console.error('Acesso negado. Verifique suas permissões.');
+          } else {
+            console.error(`Erro inesperado (${status}): ${error.response.data}`);
+          }
+        } else {
+          // Outros erros (rede, CORS, etc.)
+          console.error('Erro ao conectar ao servidor:', error.message);
+        }
       }
     },
   };

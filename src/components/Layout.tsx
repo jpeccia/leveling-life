@@ -106,7 +106,7 @@ export function Layout({ children }: LayoutProps) {
                 </div>
                 <div>
                   <p className="font-semibold text-white">{user?.name}</p>
-                  <p className="text-xs text-indigo-200 font-medium">{user?.title || 'Novice Adventurer'}</p>
+                  <p className="text-xs text-indigo-200 font-medium">{user?.title || 'Aventureiro Novato'}</p>
                   <div className="mt-2 w-36">
                     <ExperienceBar current={user?.xp || 0} max={user ? user.level * 800 : 100} />
                   </div>

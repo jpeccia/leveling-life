@@ -24,6 +24,8 @@ export default function Ranking() {
   const [users, setUsers] = useState<RankedUser[]>([]);
   const [selectedUser, setSelectedUser] = useState<RankedUser | null>(null);
   const { fetchUser } = useAuthStore();
+  const [isFriend, setIsFriend] = useState<boolean>(false);
+
 
   useEffect(() => {
     loadRanking();
